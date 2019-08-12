@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 
-class User:
+class User(db.Model):
     """A person using the habit tracker."""
 
     __tablename__ = "users"
@@ -15,16 +15,16 @@ class User:
     username = db.Column(db.String(25), nullable=False)
     password = db.Column(db.String(64), nullable=False)
 
-    habits = db.relationship("Habit", secondary="activites", backref="user")
+    habits = db.relationship("Habit", secondary="activities", backref="user")
 
-    # def __repr__(self):
-    #     """Show user details."""
+    def __repr__(self):
+        """Show user details."""
 
-    #     return "<User user_id={{user_id}}, email={{email}}, "\
-    #            "username={{username}}>"
+        return f"<User user_id={self.user_id}, email={self.email}, "\
+               f"username={self.username}>"
 
 
-class Habit:
+class Habit(db.Model):
     """An type of activity that will be tracked by a User."""
 
     __tablename__ = "habits"
@@ -33,8 +33,13 @@ class Habit:
     label = db.Column(db.String(30), nullable=False)
     unit = db.Column(db.String(20), nullable=False)
 
+    def __repr__(self):
+        """Show habit details."""
 
-class Activity:
+        pass
+
+
+class Activity(db.Model):
     """An instance of a Habit completed by a User."""
 
     __tablename__ = "activities"
@@ -51,7 +56,7 @@ class Activity:
     habit = db.relationship("Habit", uselist=False, backref="activities")
 
 
-class Influence:
+class Influence(db.Model):
     """Something that may passively influence a User, like the weather.""" 
 
     __tablename__ = "influences"
@@ -67,7 +72,7 @@ class Influence:
     user = db.relationship("User", uselist=False, backref="influences")
 
 
-class Symptom:
+class Symptom(db.Model):
     """A measurement of one aspect of a User's wellness."""
 
     __tablename__ = "symptoms"
@@ -83,7 +88,7 @@ class Symptom:
     user = db.relationship("User", uselist=False, backref="symptoms")
 
 
-class Goal:
+class Goal(db.Model):
     """A user-set goal: to do a Habit x times during x time period."""
 
     __tablename__ = "goals"
@@ -98,18 +103,9 @@ class Goal:
     habit = db.relationship("Habit", uselist=False, backref="goals")
 
 
-def connect_to_db(app):
-    """Connect Flask app to habit-tracker database."""
-
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///habit-tracker'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    db.app = app
-    db.init_app(app)
-
-
 if __name__ == "__main__":
     # Connect to habit-tracker database when testing models interactively.
-    from server import app
-    connect_to_db(app)
-
+    # from server import app
+    # connect_to_db(app)
+    pass
 
