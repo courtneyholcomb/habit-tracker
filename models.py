@@ -6,16 +6,6 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 
-class Habit:
-    """An type of activity that will be tracked by a User."""
-
-    __tablename__ = "habits"
-
-    habit_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    label = db.Column(db.String(30), nullable=False)
-    unit = db.Column(db.String(20), nullable=False)
-
-
 class User:
     """A person using the habit tracker."""
 
@@ -25,6 +15,18 @@ class User:
     email = db.Column(db.String(64), nullable=False)
     username = db.Column(db.String(25), nullable=False)
     password = db.Column(db.String(64), nullable=False)
+
+    habits = db.relationship("Habit", secondary="activites", backref="user")
+
+
+class Habit:
+    """An type of activity that will be tracked by a User."""
+
+    __tablename__ = "habits"
+
+    habit_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    label = db.Column(db.String(30), nullable=False)
+    unit = db.Column(db.String(20), nullable=False)
 
 
 class Activity:
@@ -40,6 +42,9 @@ class Activity:
     latitude = db.Column(db.Float)    # ok for location columns to be null?
     longitude = db.Column(db.Float)
 
+    user = db.relationship("User", uselist=False, backref="activities")
+    habit = db.relationship("Habit", uselist=False, backref="activities")
+
 
 class Influence:
     """Something that may passively influence a User, like the weather.""" 
@@ -53,6 +58,8 @@ class Influence:
     timestamp = db.Column(db.DateTime, nullable=False)
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+
+    user = db.relationship("User", uselist=False, backref="influences")
 
 
 class Symptom:
@@ -68,6 +75,8 @@ class Symptom:
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
 
+    user = db.relationship("User", uselist=False, backref="symptoms")
+
 
 class Goal:
     """A user-set goal: to do a Habit x times during x time period."""
@@ -80,6 +89,8 @@ class Goal:
     num_units = db.Column(db.Float, nullable=False)
     time_period = db.Columb(db.Interval, nullable=False)
 
+    user = db.relationship("User", uselist=False, backref="goals")
+    habit = db.relationship("Habit", uselist=False, backref="goals")
 
 
 
