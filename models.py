@@ -10,7 +10,7 @@ class User(db.Model):
 
     __tablename__ = "users"
 
-    user_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     email = db.Column(db.String(64), nullable=False)
     username = db.Column(db.String(25), nullable=False)
     password = db.Column(db.String(64), nullable=False)
@@ -18,10 +18,9 @@ class User(db.Model):
     habits = db.relationship("Habit", secondary="activities", backref="user")
 
     def __repr__(self):
-        """Show user details."""
+        """Show User id and username."""
 
-        return f"<User user_id={self.user_id}, email={self.email}, "\
-               f"username={self.username}>"
+        return f"<User {self.id} {self.username}>"
 
 
 class Habit(db.Model):
@@ -29,14 +28,14 @@ class Habit(db.Model):
 
     __tablename__ = "habits"
 
-    habit_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     label = db.Column(db.String(30), nullable=False)
     unit = db.Column(db.String(20), nullable=False)
 
     def __repr__(self):
-        """Show habit details."""
+        """Show Habit id and label."""
 
-        pass
+        return f"<Habit {self.id} {self.label}>"
 
 
 class Activity(db.Model):
@@ -44,9 +43,9 @@ class Activity(db.Model):
 
     __tablename__ = "activities"
 
-    activity_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
-    habit_id = db.Column(db.Integer, db.ForeignKey('habits.habit_id'))
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    habit_id = db.Column(db.Integer, db.ForeignKey('habits.id'))
     num_units = db.Column(db.Float, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
     latitude = db.Column(db.Float)    # ok for location columns to be null?
@@ -55,14 +54,19 @@ class Activity(db.Model):
     user = db.relationship("User", uselist=False, backref="activities")
     habit = db.relationship("Habit", uselist=False, backref="activities")
 
+    def __repr__(self):
+        """Show Activity id, label, and associated User's username."""
+
+        return f"<Activity {self.id} {self.habit.label} {self.user.username}>"
+
 
 class Influence(db.Model):
     """Something that may passively influence a User, like the weather.""" 
 
     __tablename__ = "influences"
 
-    influence_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     label = db.Column(db.String(30), nullable=False)
     intensity = db.Column(db.Integer)   # ok for this to be null?
     timestamp = db.Column(db.DateTime, nullable=False)
@@ -71,14 +75,19 @@ class Influence(db.Model):
 
     user = db.relationship("User", uselist=False, backref="influences")
 
+    def __repr__(self):
+        """Show Influence id, label, and associated User's username."""
+
+        return f"<Influence {self.id} {self.label} {self.user.username}>"
+
 
 class Symptom(db.Model):
     """A measurement of one aspect of a User's wellness."""
 
     __tablename__ = "symptoms"
 
-    symptom_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     label = db.Column(db.String(50), nullable=False)
     intensity = db.Column(db.Integer) # ok for this to be null?
     timestamp = db.Column(db.DateTime, nullable=False)
@@ -87,20 +96,30 @@ class Symptom(db.Model):
 
     user = db.relationship("User", uselist=False, backref="symptoms")
 
+    def __repr__(self):
+        """Show Symptom id, label, and associated User's username."""
+
+        return f"<Symptom {self.id} {self.label} {self.user.username}>"
+
 
 class Goal(db.Model):
     """A user-set goal: to do a Habit x times during x time period."""
 
     __tablename__ = "goals"
 
-    goal_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
-    habit_id = db.Column(db.Integer, db.ForeignKey('habits.habit_id'))
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    habit_id = db.Column(db.Integer, db.ForeignKey('habits.id'))
     num_units = db.Column(db.Float, nullable=False)
     time_period = db.Column(db.Interval, nullable=False)
 
     user = db.relationship("User", uselist=False, backref="goals")
     habit = db.relationship("Habit", uselist=False, backref="goals")
+
+    def __repr__(self):
+        """Show Goal id, associated Habit label, and associated username."""
+
+        return f"<Goal {self.id} {self.habit.label} {self.user.username}>"
 
 
 if __name__ == "__main__":
