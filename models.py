@@ -44,8 +44,8 @@ class HabitEvent(db.Model): # rename: habit occurrence
     __tablename__ = "habit_events"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    habit_id = db.Column(db.Integer, db.ForeignKey('habits.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    habit_id = db.Column(db.Integer, db.ForeignKey("habits.id"))
     num_units = db.Column(db.Float) # if units null in habit, can be null here
     timestamp = db.Column(db.DateTime, nullable=False)
     latitude = db.Column(db.Float)    # ok for location columns to be null?
@@ -81,8 +81,8 @@ class InfluenceEvent(db.Model):
     __tablename__ = "influence_events"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    influence_id = db.Column(db.Integer, db.ForeignKey('influences.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    influence_id = db.Column(db.Integer, db.ForeignKey("influences.id"))
     intensity = db.Column(db.Integer)
     timestamp = db.Column(db.DateTime, nullable=False)
     latitude = db.Column(db.Float)
@@ -120,7 +120,7 @@ class SymptomEvent(db.Model):
     __tablename__ = "symptom_events"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     intensity = db.Column(db.Integer)
     timestamp = db.Column(db.DateTime, nullable=False)
     latitude = db.Column(db.Float)
@@ -143,8 +143,8 @@ class Goal(db.Model):
     __tablename__ = "goals"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    habit_id = db.Column(db.Integer, db.ForeignKey('habits.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    habit_id = db.Column(db.Integer, db.ForeignKey("habits.id"))
     num_units = db.Column(db.Float, nullable=False)
     time_period = db.Column(db.Interval, nullable=False)
 
