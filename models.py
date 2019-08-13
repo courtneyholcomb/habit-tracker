@@ -15,7 +15,7 @@ class User(db.Model):
     username = db.Column(db.String(25), nullable=False)
     password = db.Column(db.String(64), nullable=False)
 
-    habits = db.relationship("Habit", secondary="activities", backref="user")
+    habits = db.relationship("Habit", secondary="habit_events", backref="user")
 
     def __repr__(self):
         """Show User id and username."""
@@ -24,13 +24,13 @@ class User(db.Model):
 
 
 class Habit(db.Model):
-    """An type of activity that will be tracked by a User."""
+    """An activity that will be tracked by a User."""
 
     __tablename__ = "habits"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     label = db.Column(db.String(30), nullable=False)
-    unit = db.Column(db.String(20), nullable=False)
+    unit = db.Column(db.String(20))
 
     def __repr__(self):
         """Show Habit id and label."""
@@ -38,47 +38,65 @@ class Habit(db.Model):
         return f"<Habit {self.id} {self.label}>"
 
 
-class Activity(db.Model):
+class HabitEvent(db.Model): # rename: habit occurrence
     """An instance of a Habit completed by a User."""
 
-    __tablename__ = "activities"
+    __tablename__ = "habit_events"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     habit_id = db.Column(db.Integer, db.ForeignKey('habits.id'))
-    num_units = db.Column(db.Float, nullable=False)
+    num_units = db.Column(db.Float) # if units null in habit, can be null here
     timestamp = db.Column(db.DateTime, nullable=False)
     latitude = db.Column(db.Float)    # ok for location columns to be null?
     longitude = db.Column(db.Float)
 
-    user = db.relationship("User", uselist=False, backref="activities")
-    habit = db.relationship("Habit", uselist=False, backref="activities")
+    user = db.relationship("User", uselist=False, backref="habit_events")
+    habit = db.relationship("Habit", uselist=False, backref="habit_events")
 
     def __repr__(self):
-        """Show Activity id, label, and associated User's username."""
+        """Show HabitEvent id, label, and associated User's username."""
 
-        return f"<Activity {self.id} {self.habit.label} {self.user.username}>"
+        return f"<HabitEvent {self.id} {self.habit.label} {self.user.username}>"
 
 
 class Influence(db.Model):
-    """Something that may passively influence a User, like the weather.""" 
+    """Something that may passively experienced by a User, like the weather.""" 
 
     __tablename__ = "influences"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     label = db.Column(db.String(30), nullable=False)
-    intensity = db.Column(db.Integer)   # ok for this to be null?
-    timestamp = db.Column(db.DateTime, nullable=False)
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-
-    user = db.relationship("User", uselist=False, backref="influences")
+    scale = db.Column(db.String(20))     # nullable
 
     def __repr__(self):
         """Show Influence id, label, and associated User's username."""
 
-        return f"<Influence {self.id} {self.label} {self.user.username}>"
+        return f"<Influence {self.id} {self.label}>"
+
+
+class InfluenceEvent(db.Model):
+    """An instance of a User experiencing an Influence."""
+
+    __tablename__ = "influence_events"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    influence_id = db.Column(db.Integer, db.ForeignKey('influences.id'))
+    intensity = db.Column(db.Integer)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+
+    user = db.relationship("User", uselist=False, backref="influence_events")
+    influence = db.relationship("Influence", uselist=False, 
+                                backref="influence_events")
+
+    def __repr__(self):
+        """Show Influence id, label, and associated User's username."""
+
+        return f"<InfluenceEvent {self.id} {self.influence.label} "\
+               f"{self.user.username}>"    
 
 
 class Symptom(db.Model):
@@ -87,19 +105,36 @@ class Symptom(db.Model):
     __tablename__ = "symptoms"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     label = db.Column(db.String(50), nullable=False)
-    intensity = db.Column(db.Integer) # ok for this to be null?
-    timestamp = db.Column(db.DateTime, nullable=False)
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-
-    user = db.relationship("User", uselist=False, backref="symptoms")
+    scale = db.Column(db.String(20))     # nullable
 
     def __repr__(self):
         """Show Symptom id, label, and associated User's username."""
 
-        return f"<Symptom {self.id} {self.label} {self.user.username}>"
+        return f"<Symptom {self.id} {self.label}>"
+
+
+class SymptomEvent(db.Model):
+    """An instance of a User experiencing a Symptom."""
+
+    __tablename__ = "symptom_events"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    intensity = db.Column(db.Integer)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+
+    user = db.relationship("User", uselist=False, backref="symptom_events")
+    symptom = db.relationship("Symptom", uselist=False,
+                              backref="symptom_events")
+
+    def __repr__(self):
+        """Show Symptom id, label, and associated User's username."""
+
+        return f"<SymptomEvent {self.id} {self.symptom.label} "\
+               f"{self.user.username}>"
 
 
 class Goal(db.Model):
