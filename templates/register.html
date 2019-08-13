@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block body %}
+
+
+<h2>Create an account to start tracking!</h2>
+<form action="/register" method="POST" id="register-form">
+    <label>
+        Email: <input type="email" name="email" id="email" required><br>
+    </label>
+    <label>
+        Pick a username: <input type="username" name="username" id="username" required><br>
+    </label>
+    <label>
+        Password: <input type="password" name="password" id="password" required><br>
+    </label>
+    <label>
+        Confirm password: <input type="password" name="confirm-password" id="confirm-password" required><br>
+    </label>
+    <input type="submit" value="Register">
+</form>
+
+<script>
+    $("#register-form").submit(function(event) {
+
+        // if ($("#email").val() === None) {
+        //     event.preventDefault();
+        //     alert("There is already an account associated with that email.");
+
+        // } else if ($("#username").val() === None) {
+        //     event.preventDefault();
+        //     alert("Username already taken.");
+            
+        // } else
+
+        if ($("#password").val().length < 8) {
+            event.preventDefault();
+            alert("Password must be at least 8 characters.")
+
+        } else if ($("#confirm-password").val() != $("#password").val()) {
+            event.preventDefault();
+            alert("Passwords entered do not match.");
+            
+        } else {
+            $("#register-form").submit();
+        }
+    })
+</script>
+<!-- prevent submission if email is taken, username is taken, password too short, passwords don't match -->
+
+
+{% endblock %}

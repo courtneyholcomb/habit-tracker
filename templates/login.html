@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Log In{% endblock %}
+
+{% block body %}
+
+
+<h2>Please log in to access your tracker.</h2>
+<form action="/login" method="POST" id="login-form">
+    <label>
+        Username: <input type="username" name="username" id="username" required><br>
+    </label>
+    <label>
+        Password: <input type="password" name="password" id="password" required><br>
+    </label>
+    <input type="submit" value="Log In">
+</form>
+
+<script>
+    // $("#login-form").submit(function(event) {
+
+    //     if ($("#username").val() not in ......) {
+    //         event.preventDefault();
+    //         alert("There is no account associated with that username.");
+
+    //     } else if ($("#passwrod").val() not in ......) {
+    //         event.preventDefault();
+    //         alert("Incorrect password.");
+            
+    //     } else {
+    //         $("#register-form").submit();
+    //     }
+    // })
+</script>
+<!-- prevent submission if email is taken, username is taken, password too short, passwords don't match -->
+
+
+{% endblock %}

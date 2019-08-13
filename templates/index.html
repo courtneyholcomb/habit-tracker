@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block body %}
+
+{% if not session["username"] %}
+<a href="/register">Register</a><br>
+<a href="/login">Log In</a><br>
+{% else %}
+<a href="/logout">Log Out</a><br>
+{% endif %}
+
+
+
+{% endblock %}
