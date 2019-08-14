@@ -107,6 +107,8 @@ def add_new_habit():
     db.session.add(new_habit)
     db.session.commit()
 
+    # check if habit is now in db; if so, flash success message
+
     return redirect("/add-new")
 
 
@@ -120,6 +122,8 @@ def add_new_influence():
     new_influence = Influence(label=label, scale=scale)
     db.session.add(new_influence)
     db.session.commit()
+
+    # check if habit is now in db; if so, flash success message
 
     return redirect("/add-new")
 
@@ -135,17 +139,37 @@ def add_new_symptom():
     db.session.add(new_symptom)
     db.session.commit()
 
+    # check if habit is now in db; if so, flash success message
+
     return redirect("/add-new")
 
 
-# # track something
-# @app.route("/track")
-# """Show the page where you can track a Habit, Influence, or Symptom."""
+# track something
+@app.route("/track")
+def show_track_page():
+    """Show the page where you can track a Habit, Influence, or Symptom."""
 
-#     return render_template("track.html")
+    return render_template("track.html")
 
 
-# route to view data
+@app.route("/track-habit", methods=["POST"])
+def track_habit():
+    """Instantiate a new HabitEvent."""
+
+    # get user input details from form
+    # get location & timestamp from browser?
+
+    new_habit_event = HabitEvent(user_id=user_id, habit_id=habit_id, 
+                                 num_units=num_units, timestamp=timestamp,
+                                 latitude=latitude, longitude=longitude)
+    db.session.add(new_habit_event)
+    db.session.commit()
+
+    return redirect("/track")
+
+
+# routes to track influence & symptom
+# add a route to view your data
 
 
 

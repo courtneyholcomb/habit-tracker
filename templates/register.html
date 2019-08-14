@@ -5,6 +5,7 @@
 {% block body %}
 
 
+
 <h2>Create an account to start tracking!</h2>
 <form action="/register" method="POST" id="register-form">
     <label>
@@ -23,13 +24,20 @@
 </form>
 
 <script>
+    const emails = eval("window.emails="+"{{ emails }}".replace(new RegExp("&#39;", 'g'), "'"));
+    const usernames = eval("window.usernames="+"{{ usernames }}".replace(new RegExp("&#39;", 'g'), "'"));
+    
+    // $.get("/whatever?email=kldsfa&username=lsjdf",function(response) {
+        
+    // })
+
     $("#register-form").submit(function(event) {
 
-        if ($("#email").val() in {{ emails }}) {
+        if (emails.indexOf($("#email").val()) != -1) {
             event.preventDefault();
             alert("There is already an account associated with that email.");
 
-        } else if ($("#username").val() in usernames) {
+        } else if (usernames.indexOf($("#username").val()) != -1) {
             event.preventDefault();
             alert("Username already taken.");
             
