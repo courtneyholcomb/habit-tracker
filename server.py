@@ -46,7 +46,7 @@ def login():
 
 
     session["username"] = username
-    session["user_id"] = user.user_id
+    session["user_id"] = user.id
 
     flash("Login successful")
 
@@ -118,7 +118,16 @@ def log_out():
 def show_add_new_form():
     """Show the page where you can create a new Habit, Influence, or Symptom."""
 
-    return render_template("add-new.html")
+    if "user_id" in session:
+        user_id = session["user_id"]
+        habits = Habit.query.filter_by(user_id=user_id)
+        influences = Influence.query.filter_by(user_id=user_id)
+        symptoms = Symptom.query.filter_by(user_id=user_id)
+        return render_template("add-new.html", habits=habits,
+                               influences=influences,
+                               symptoms=symptoms)
+    else:
+        redirect("/")
 
 
 @app.route("/new-habit", methods=["POST"])
@@ -128,13 +137,18 @@ def add_new_habit():
     label = request.form.get("label")
     unit = request.form.get("unit")
 
-    new_habit = Habit(label=label, unit=unit)
-    db.session.add(new_habit)
-    db.session.commit()
+    user_id = session["user_id"]
+    user = User.query.get(user_id)
 
-    # check if habit is now in db; if so, flash success message
+    habit_labels = [habit.label for habit in user.habits]
 
-    return redirect("/add-new")
+    if label not in habit_labels:
+        new_habit = Habit(label=label, unit=unit, user_id=user_id)
+        db.session.add(new_habit)
+        db.session.commit()
+        return "New habit added successfully."
+    else:
+        return "You already have a habit with that title." 
 
 
 @app.route("/new-influence", methods=["POST"])
@@ -142,15 +156,20 @@ def add_new_influence():
     """Instantiate a new Influence."""
 
     label = request.form.get("label")
-    unit = request.form.get("scale")
+    scale = request.form.get("scale")
 
-    new_influence = Influence(label=label, scale=scale)
-    db.session.add(new_influence)
-    db.session.commit()
+    user_id = session["user_id"]
+    user = User.query.get(user_id)
 
-    # check if habit is now in db; if so, flash success message
+    influence_labels = [influence.label for influence in user.influences]
 
-    return redirect("/add-new")
+    if label not in influence_labels:
+        new_influence = Influence(label=label, scale=scale, user_id=user_id)
+        db.session.add(new_influence)
+        db.session.commit()
+        return "New influence added successfully."
+    else:
+        return "You already have an influence with that title."
 
 
 @app.route("/new-symptom", methods=["POST"])
@@ -158,23 +177,30 @@ def add_new_symptom():
     """Instantiate a new Symptom."""
 
     label = request.form.get("label")
-    unit = request.form.get("scale")
+    scale = request.form.get("scale")
 
-    new_symptom = Influence(label=label, scale=scale)
-    db.session.add(new_symptom)
-    db.session.commit()
+    user_id = session["user_id"]
+    user = User.query.get(user_id)
 
-    # check if habit is now in db; if so, flash success message
+    symptom_labels = [symptom.label for symptom in user.symptoms]
 
-    return redirect("/add-new")
+    if label not in symptom_labels:
+        new_symptom = Symptom(label=label, scale=scale, user_id=user_id)
+        db.session.add(new_symptom)
+        db.session.commit()
+        return "New symptom added successfully."
+    else:
+        return "You already have a symptom with that title."
 
 
 # track something
 @app.route("/track")
 def show_track_page():
     """Show the page where you can track a Habit, Influence, or Symptom."""
-
-    return render_template("track.html")
+    if "user_id" in session:
+        return render_template("track.html")
+    else:
+        redirect("/")
 
 
 @app.route("/add-habit-event", methods=["POST"])

@@ -3,45 +3,145 @@
 {% block title %}Add Something New{% endblock %}
 
 {% block body %}
-<h3>New habit</h3>
-<form action="/new-habit" method="POST">
+<h3>New Habit</h3>
+<form action="/new-habit" method="POST" id="new-habit">
     <label>
-        Habit title: <input type="text" name="label">
+        Habit title: <input type="text" name="label" id="habit-label">
     </label>
     <br>
     <label>
-        Unit of measurement: <input type="text" name="unit">
+        Unit of measurement: <input type="text" name="unit" id="habit-unit">
     </label>
     <br>
     <input type="submit">
 </form>
-<br>
+<h4>Habits Tracked:</h4>
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Unit</th>
+    </tr>
+    {% for habit in habits %}
+        <tr>
+            <td>{{ habit.label }}</td>
+            <td>{{ habit.unit }}</td>
+        </tr>
+    {% endfor %}
+</table>
 
 <h3>New Passive Influence</h3>
-<form action="new-influence" method="POST">
+<form action="new-influence" method="POST" id="new-influence">
     <label>
-        Influence title: <input type="text" name="label">
+        Influence title: <input type="text" name="label" id="influence-label">
     </label>
     <br>
     <label>
-        Intensity scale: 0 to <input type="text" name="scale">
+        Intensity scale: 0 to <input type="text" name="scale" id="influence-scale">
     </label>
     <br>
     <input type="submit">
 </form>
-<br>
+<h4>Influences Tracked:</h4>
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Scale</th>
+    </tr>
+    {% for influence in influences %}
+        <tr>
+            <td>{{ influence.label }}</td>
+            <td>{{ influence.scale }}</td>
+        </tr>
+    {% endfor %}
+</table>
 
 <h3>New Symptom</h3>
-<form action="new-symptom" method="POST">
+<form action="new-symptom" method="POST" id="new-symptom">
     <label>
-        Influence title: <input type="text" name="label">
+        Symptom title: <input type="text" name="label" id="symptom-label">
     </label>
     <br>
     <label>
-        Intensity scale: 0 to <input type="text" name="scale">
+        Symptom scale: 0 to <input type="text" name="scale" id="symptom-scale">
     </label>
     <br>
     <input type="submit">
 </form>
+<h4>Symptoms Tracked:</h4>
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Scale</th>
+    </tr>
+    {% for symptom in symptoms %}
+        <tr>
+            <td>{{ symptom.label }}</td>
+            <td>{{ symptom.scale }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+
+<script>
+
+    function addHabit(event) {
+        event.preventDefault();
+
+        formData = {
+            label: $("#habit-label").val(),
+            unit: $("#habit-unit").val()
+        };
+
+        $.post("/new-habit", formData, function (response) {
+            alert(response);
+            if (response == "New habit added successfully.") {
+                $("#new-habit")[0].reset();
+            }
+        });
+    }
+
+    $("#new-habit input[type='submit']").on("click", addHabit);
+
+
+
+    function addInfluence(event) {
+        event.preventDefault();
+
+        formData = {
+            label: $("#influence-label").val(),
+            scale: $("#influence-scale").val()
+        };
+
+        $.post("/new-influence", formData, function (response) {
+            alert(response);
+            if (response == "New influence added successfully.") {
+                $("#new-influence")[0].reset();
+            }
+        });
+    }
+
+    $("#new-influence input[type='submit']").on("click", addInfluence);
+
+
+
+    function addSymptom(event) {
+        event.preventDefault();
+
+        formData = {
+            label: $("#symptom-label").val(),
+            scale: $("#symptom-scale").val()
+        };
+
+        $.post("/new-symptom", formData, function (response) {
+            alert(response);
+            if (response == "New symptom added successfully.") {
+                $("#new-symptom")[0].reset();
+            }
+        });
+    }
+
+    $("#new-symptom input[type='submit']").on("click", addSymptom);
+
+</script>
 
 {% endblock %}
