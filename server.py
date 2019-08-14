@@ -28,17 +28,6 @@ def show_homepage():
     return render_template("index.html")
 
 
-@app.route("/register")
-def show_register_form():
-    """Show registration page."""
-
-    users = db.session.query(User).all()
-    usernames = [user.username for user in users]
-    emails = [user.email for user in users]
-
-    return render_template("register.html", usernames=usernames, emails=emails)
-
-
 @app.route("/login")
 def show_login_form():
     """Show login page."""
@@ -53,11 +42,47 @@ def login():
     """Log user into the session."""
 
     username = request.form.get("username")
+    user = User.query.filter_by(username=username).one()
+
+
     session["username"] = username
+    session["user_id"] = user.user_id
 
     flash("Login successful")
 
     return redirect("/")
+
+
+@app.route("/register")
+def show_register_form():
+    """Show registration page."""
+
+    return render_template("register.html")
+
+
+@app.route("/validate-registration", methods=["POST"])
+def validate_registration():
+    """Check that username/email are unique and password meets requirements."""
+
+    users = db.session.query(User).all()
+    usernames = [user.username for user in users]
+    emails = [user.email for user in users]
+
+    username = request.form.get("username")
+    email = request.form.get("email")
+    password = request.form.get("password")
+    confpass = request.form.get("confpass")
+
+    if email in emails:
+        return "There is already an account associated with that email."
+    elif username in usernames:
+        return "Username already taken."
+    elif len(password) < 8:
+        return "Password must be at least 8 characters."
+    elif confpass != password:
+        return "Passwords entered do not match."
+    else:
+        return ""
 
 
 @app.route("/register", methods=["POST"])
@@ -152,12 +177,24 @@ def show_track_page():
     return render_template("track.html")
 
 
-@app.route("/track-habit", methods=["POST"])
+@app.route("/add-habit-event", methods=["POST"])
 def track_habit():
     """Instantiate a new HabitEvent."""
 
-    # get user input details from form
-    # get location & timestamp from browser?
+    habit_label = request.form.get("label")
+    habit = Habit.query.filter_by(label=habit_label).one()
+    habit_id = habit.id
+
+    user_id = session["user_id"]
+    num_units = request.form.get("num_units")
+
+    # if the user entered a datetime, use that. if not, use current time.
+    timestamp = get(request.form.get("datetime"), now())
+
+    # get location from browser?
+    # only get location when something is tracked or track all the time?
+    latitude = None
+    longitude = None
 
     new_habit_event = HabitEvent(user_id=user_id, habit_id=habit_id, 
                                  num_units=num_units, timestamp=timestamp,
@@ -168,7 +205,63 @@ def track_habit():
     return redirect("/track")
 
 
-# routes to track influence & symptom
+@app.route("/add-influence-event", methods=["POST"])
+def track_influence():
+    """Instantiate a new InfluenceEvent."""
+
+    influence_label = request.form.get("label")
+    influence = Influence.query.filter_by(label=influence_label).one()
+    influence_id = influence.id
+
+    user_id = session["user_id"]
+    intensity = request.form.get("intensity")
+
+    # if the user entered a datetime, use that. if not, use current time.
+    timestamp = get(request.form.get("datetime"), now())
+
+    latitude = None
+    longitude = None
+
+    new_influence_event = InfluenceEvent(user_id=user_id,
+                                         influence_id=influence_id, 
+                                         num_units=num_units,
+                                         timestamp=timestamp, latitude=latitude,
+                                         longitude=longitude)
+    db.session.add(new_influence_event)
+    db.session.commit()
+
+    return redirect("/track")
+
+
+@app.route("/add-symptom-event", methods=["POST"])
+def track_symptom():
+    """Instantiate a new SymptomEvent."""
+
+    symptom_label = request.form.get("label")
+    symptom = Symptom.query.filter_by(label=symptom_label).one()
+    symptom_id = symptom.id
+
+    user_id = session["user_id"]
+    intensity = request.form.get("intensity")
+
+    # if the user entered a datetime, use that. if not, use current time.
+    timestamp = get(request.form.get("datetime"), now())
+
+    latitude = None
+    longitude = None
+
+    new_symptom_event = SymptomEvent(user_id=user_id,
+                                         symptom_id=symptom_id, 
+                                         num_units=num_units,
+                                         timestamp=timestamp, latitude=latitude,
+                                         longitude=longitude)
+    db.session.add(new_symptom_event)
+    db.session.commit()
+
+    return redirect("/track")
+
+
+
 # add a route to view your data
 
 

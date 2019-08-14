@@ -20,38 +20,31 @@
     <label>
         Confirm password: <input type="password" name="confirm-password" id="confirm-password" required><br>
     </label>
-    <input type="submit" value="Register">
+    <input type="submit" value="Register" id="register">
 </form>
 
 <script>
-    const emails = eval("window.emails="+"{{ emails }}".replace(new RegExp("&#39;", 'g'), "'"));
-    const usernames = eval("window.usernames="+"{{ usernames }}".replace(new RegExp("&#39;", 'g'), "'"));
-    
-    // $.get("/whatever?email=kldsfa&username=lsjdf",function(response) {
-        
-    // })
 
-    $("#register-form").submit(function(event) {
+function validateRegistration(event) {
+    event.preventDefault();
 
-        if (emails.indexOf($("#email").val()) != -1) {
-            event.preventDefault();
-            alert("There is already an account associated with that email.");
+    const regInputs = { 
+        'email': $("#email").val(), 
+        'username': $("#username").val(),
+        'password': $("#password").val(), 
+        'confpass': $("#confirm-password").val()
+    };
 
-        } else if (usernames.indexOf($("#username").val()) != -1) {
-            event.preventDefault();
-            alert("Username already taken.");
-            
-        } else if ($("#password").val().length < 8) {
-            event.preventDefault();
-            alert("Password must be at least 8 characters.")
-
-        } else if ($("#confirm-password").val() != $("#password").val()) {
-            event.preventDefault();
-            alert("Passwords entered do not match.");
-            
+    $.post("/validate-registration", regInputs, function (response) {
+        if (response) {
+            alert(response);
         } else {
             $("#register-form").submit();
         }
-    })
+    });
+}
+    
+$('#register-form input[type="submit"]').on('click', validateRegistration);
+
 </script>
 {% endblock %}

@@ -16,7 +16,9 @@ class User(db.Model):
     username = db.Column(db.String(25), nullable=False)
     password = db.Column(db.String(64), nullable=False)
 
-    habits = db.relationship("Habit", secondary="habit_events", backref="user")
+    habits = db.relationship("Habit", backref="user")
+    influences = db.relationship("Influence", backref="user")
+    symptoms = db.relationship("Symptom", backref="user")
 
     def __repr__(self):
         """Show User id and username."""
@@ -30,13 +32,14 @@ class Habit(db.Model):
     __tablename__ = "habits"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     label = db.Column(db.String(30), nullable=False)
     unit = db.Column(db.String(20))
 
     def __repr__(self):
         """Show Habit id and label."""
 
-        return f"<Habit {self.id} {self.label}>"
+        return f"<Habit {self.id} {self.label} {self.user.username}>"
 
 
 class HabitEvent(db.Model): # rename: habit occurrence
@@ -67,13 +70,14 @@ class Influence(db.Model):
     __tablename__ = "influences"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     label = db.Column(db.String(30), nullable=False)
     scale = db.Column(db.String(20))     # nullable
 
     def __repr__(self):
         """Show Influence id, label, and associated User's username."""
 
-        return f"<Influence {self.id} {self.label}>"
+        return f"<Influence {self.id} {self.label} {self.user.username}>"
 
 
 class InfluenceEvent(db.Model):
@@ -106,13 +110,14 @@ class Symptom(db.Model):
     __tablename__ = "symptoms"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     label = db.Column(db.String(50), nullable=False)
     scale = db.Column(db.String(20))     # nullable
 
     def __repr__(self):
         """Show Symptom id, label, and associated User's username."""
 
-        return f"<Symptom {self.id} {self.label}>"
+        return f"<Symptom {self.id} {self.label} {self.user.username}>"
 
 
 class SymptomEvent(db.Model):
