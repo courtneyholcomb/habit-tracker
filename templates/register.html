@@ -25,17 +25,15 @@
 <script>
     $("#register-form").submit(function(event) {
 
-        // if ($("#email").val() === None) {
-        //     event.preventDefault();
-        //     alert("There is already an account associated with that email.");
+        if ($("#email").val() in {{ emails }}) {
+            event.preventDefault();
+            alert("There is already an account associated with that email.");
 
-        // } else if ($("#username").val() === None) {
-        //     event.preventDefault();
-        //     alert("Username already taken.");
+        } else if ($("#username").val() in usernames) {
+            event.preventDefault();
+            alert("Username already taken.");
             
-        // } else
-
-        if ($("#password").val().length < 8) {
+        } else if ($("#password").val().length < 8) {
             event.preventDefault();
             alert("Password must be at least 8 characters.")
 
@@ -48,7 +46,4 @@
         }
     })
 </script>
-<!-- prevent submission if email is taken, username is taken, password too short, passwords don't match -->
-
-
 {% endblock %}

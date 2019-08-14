@@ -17,22 +17,21 @@
 </form>
 
 <script>
-    // $("#login-form").submit(function(event) {
+    $("#login-form").submit(function(event) {
 
-    //     if ($("#username").val() not in ......) {
-    //         event.preventDefault();
-    //         alert("There is no account associated with that username.");
+        if ($("#username").val() not in usernames) {
+            event.preventDefault();
+            alert("There is no account associated with that username.");
 
-    //     } else if ($("#passwrod").val() not in ......) {
-    //         event.preventDefault();
-    //         alert("Incorrect password.");
+        // } else if ($("#password").val() != ......... {
+        //     event.preventDefault();
+        //     alert("Incorrect password.");
             
-    //     } else {
-    //         $("#register-form").submit();
-    //     }
-    // })
+        } else {
+            $("#register-form").submit();
+        }
+    })
 </script>
-<!-- prevent submission if email is taken, username is taken, password too short, passwords don't match -->
 
 
 {% endblock %}

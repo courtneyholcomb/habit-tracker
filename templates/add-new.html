@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Add Something New{% endblock %}
+
+{% block body %}
+<h3>New habit</h3>
+<form action="/new-habit" method="POST">
+    <label>
+        Habit title: <input type="text" name="label">
+    </label>
+    <br>
+    <label>
+        Unit of measurement: <input type="text" name="unit">
+    </label>
+    <br>
+    <input type="submit">
+</form>
+<br>
+
+<h3>New Passive Influence</h3>
+<form action="new-influence" method="POST">
+    <label>
+        Influence title: <input type="text" name="label">
+    </label>
+    <br>
+    <label>
+        Intensity scale: 0 to <input type="text" name="scale">
+    </label>
+    <br>
+    <input type="submit">
+</form>
+<br>
+
+<h3>New Symptom</h3>
+<form action="new-symptom" method="POST">
+    <label>
+        Influence title: <input type="text" name="label">
+    </label>
+    <br>
+    <label>
+        Intensity scale: 0 to <input type="text" name="scale">
+    </label>
+    <br>
+    <input type="submit">
+</form>
+
+{% endblock %}

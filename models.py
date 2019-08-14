@@ -1,8 +1,9 @@
-"""Models for habit tracker database tables."""
+"""Models for habit tracker."""
 
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
+
 
 
 class User(db.Model):
@@ -121,6 +122,7 @@ class SymptomEvent(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    symptom_id = db.Column(db.Integer, db.ForeignKey("symptoms.id"))
     intensity = db.Column(db.Integer)
     timestamp = db.Column(db.DateTime, nullable=False)
     latitude = db.Column(db.Float)
@@ -162,4 +164,3 @@ if __name__ == "__main__":
     # from server import app
     # connect_to_db(app)
     pass
-
