@@ -6,7 +6,7 @@
 <h3>Track a Habit:</h3>
 <form action="/add-habit-event" method="POST">
     <label>Habit: 
-        <select name="label">
+        <select name="habit">
             {% for habit in habits %}
                 <option value={{habit.id}}>{{ habit.label }}</option>
             {% endfor %}

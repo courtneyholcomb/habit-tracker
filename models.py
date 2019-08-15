@@ -1,6 +1,7 @@
 """Models for habit tracker."""
 
 from flask_sqlalchemy import SQLAlchemy
+# from server import *
 
 db = SQLAlchemy()
 

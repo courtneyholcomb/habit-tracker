@@ -17,21 +17,26 @@
 </form>
 
 <script>
-    $("#login-form").submit(function(event) {
 
-        if ($("#username").val() not in usernames) {
-            event.preventDefault();
-            alert("There is no account associated with that username.");
+function validateLogin(event) {
+    event.preventDefault();
+    debugger
 
-        // } else if ($("#password").val() != ......... {
-        //     event.preventDefault();
-        //     alert("Incorrect password.");
-            
+    const loginInputs = { 
+        'username': $("#username").val(),
+        'password': $("#password").val()
+    };
+
+    $.post("/validate-login", loginInputs, function (response) {
+        if (response) {
+            alert(response);
         } else {
-            $("#register-form").submit();
+            $("#login-form").submit();
         }
-    })
+    });
+}
+    
+$('#login-form input[type="submit"]').on('click', validateLogin);
+
 </script>
-
-
 {% endblock %}

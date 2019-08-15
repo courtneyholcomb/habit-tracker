@@ -2,6 +2,7 @@
 
 from flask import Flask, render_template, redirect, flash, request, session
 from flask_debugtoolbar import DebugToolbarExtension
+from datetime import datetime
 
 from models import *
 
@@ -32,9 +33,28 @@ def show_homepage():
 def show_login_form():
     """Show login page."""
 
-    usernames = db.session.query(User.username).all()
+    return render_template("login.html")
 
-    return render_template("login.html", usernames=usernames)
+
+@app.route("/validate-login", methods=["POST"])
+def validate_login():
+    """Check that username exists and password matches for that User."""
+
+    username = request.form.get("username")
+    password = request.form.get("password")
+
+    users = db.session.query(User).all()
+    usernames = [user.username for user in users]
+
+    if username not in usernames:
+        return "There is no account associated with that username."
+    else:
+        user = db.session.query(User).filter_by(username=username).one()
+
+    if password != user.password:
+        return "Incorrect password."
+    else:
+        return ""
 
 
 @app.route("/login", methods=["POST"])
@@ -212,18 +232,19 @@ def track_habit():
     user_id = session["user_id"]
     num_units = request.form.get("num_units")
 
-    habit_label = request.form.get("label")
-    habit = db.session.query(Habit).filter(Habit.label == habit_label, Habit.user_id == user_id).one()
+    habit_id = request.form.get("habit")
+    habit = db.session.query(Habit).filter(Habit.id == habit_id, Habit.user_id == user_id).one()
     habit_id = habit.id
 
     # if the user entered a datetime, use that. if not, use current time.
-    timestamp = get(request.form.get("datetime"), now())
+    timestamp = datetime.utcnow()
+    timestamp = request.form.get("datetime")
 
     # get location from browser?
     # only get location when something is tracked or track all the time?
     location = request.form.get("location")
-    latitude = get(request.form.get("latitude"))
-    longitude = None
+    latitude = request.form.get("latitude")
+    longitude = request.form.get("longitude")
 
     new_habit_event = HabitEvent(user_id=user_id, habit_id=habit_id, 
                                  num_units=num_units, timestamp=timestamp,
