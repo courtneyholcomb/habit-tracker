@@ -233,12 +233,14 @@ def track_habit():
     num_units = request.form.get("num_units")
 
     habit_id = request.form.get("habit")
-    habit = db.session.query(Habit).filter(Habit.id == habit_id, Habit.user_id == user_id).one()
-    habit_id = habit.id
+    habit = Habit.query.get(habit_id)
 
     # if the user entered a datetime, use that. if not, use current time.
-    timestamp = datetime.utcnow()
-    timestamp = request.form.get("datetime")
+    time_input = request.form.get("datetime")
+    if time_input:
+        timestamp = datetime.fromisoformat(time_input)
+    else:
+        timestamp = datetime.now()
 
     # get location from browser?
     # only get location when something is tracked or track all the time?
@@ -252,6 +254,8 @@ def track_habit():
     db.session.add(new_habit_event)
     db.session.commit()
 
+    flash("Habit tracked successfully!")
+
     return redirect("/track")
 
 
@@ -259,26 +263,34 @@ def track_habit():
 def track_influence():
     """Instantiate a new InfluenceEvent."""
 
-    influence_label = request.form.get("label")
-    influence = Influence.query.filter_by(label=influence_label).one()
-    influence_id = influence.id
-
     user_id = session["user_id"]
     intensity = request.form.get("intensity")
 
-    # if the user entered a datetime, use that. if not, use current time.
-    timestamp = get(request.form.get("datetime"), now())
+    influence_id = request.form.get("influence")
+    influence = Influence.query.get(influence_id)
 
-    latitude = None
-    longitude = None
+    # if the user entered a datetime, use that. if not, use current time.
+    time_input = request.form.get("datetime")
+    if time_input:
+        timestamp = datetime.fromisoformat(time_input)
+    else:
+        timestamp = datetime.now()
+
+    # get location from browser?
+    # only get location when something is tracked or track all the time?
+    location = request.form.get("location")
+    latitude = request.form.get("latitude")
+    longitude = request.form.get("longitude")
 
     new_influence_event = InfluenceEvent(user_id=user_id,
                                          influence_id=influence_id, 
-                                         num_units=num_units,
+                                         intensity=intensity,
                                          timestamp=timestamp, latitude=latitude,
                                          longitude=longitude)
     db.session.add(new_influence_event)
     db.session.commit()
+
+    flash("Influence tracked successfully!")
 
     return redirect("/track")
 
@@ -287,26 +299,32 @@ def track_influence():
 def track_symptom():
     """Instantiate a new SymptomEvent."""
 
-    symptom_label = request.form.get("label")
-    symptom = Symptom.query.filter_by(label=symptom_label).one()
-    symptom_id = symptom.id
-
     user_id = session["user_id"]
     intensity = request.form.get("intensity")
 
-    # if the user entered a datetime, use that. if not, use current time.
-    timestamp = get(request.form.get("datetime"), now())
+    symptom_id = request.form.get("symptom")
+    symptom = Symptom.query.get(symptom_id)
 
-    latitude = None
-    longitude = None
+    # if the user entered a datetime, use that. if not, use current time.
+    time_input = request.form.get("datetime")
+    if time_input:
+        timestamp = datetime.fromisoformat(time_input)
+    else:
+        timestamp = datetime.now()
+
+    location = request.form.get("location")
+    latitude = request.form.get("latitude")
+    longitude = request.form.get("longitude")
 
     new_symptom_event = SymptomEvent(user_id=user_id,
                                          symptom_id=symptom_id, 
-                                         num_units=num_units,
+                                         intensity=intensity,
                                          timestamp=timestamp, latitude=latitude,
                                          longitude=longitude)
     db.session.add(new_symptom_event)
     db.session.commit()
+
+    flash("Symptom tracked successfully!")
 
     return redirect("/track")
 

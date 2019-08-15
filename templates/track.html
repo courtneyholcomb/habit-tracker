@@ -35,7 +35,7 @@
 <h3>Track an Influence:</h3>
 <form action="/add-influence-event" method="POST">
     <label>Influence: 
-        <select name="label">
+        <select name="influence">
             {% for influence in influences %}
                 <option value={{influence.id}}>{{ influence.label }}</option>
             {% endfor %}
@@ -64,7 +64,7 @@
 <h3>Track a Symptom:</h3>
 <form action="/add-symptom-event" method="POST">
     <label>Symptom: 
-        <select name="label">
+        <select name="symptom">
             {% for symptom in symptoms %}
                 <option value={{symptom.id}}>{{ symptom.label }}</option>
             {% endfor %}
@@ -85,8 +85,40 @@
     <br>
     <input type="submit">
 </form>
-<br>
-<br>
-<br>
+
+
+
+
+
 
 {% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
