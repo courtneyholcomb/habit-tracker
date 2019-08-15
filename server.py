@@ -120,12 +120,10 @@ def show_add_new_form():
 
     if "user_id" in session:
         user_id = session["user_id"]
-        habits = Habit.query.filter_by(user_id=user_id)
-        influences = Influence.query.filter_by(user_id=user_id)
-        symptoms = Symptom.query.filter_by(user_id=user_id)
-        return render_template("add-new.html", habits=habits,
-                               influences=influences,
-                               symptoms=symptoms)
+        user = User.query.get(user_id)
+        return render_template("add-new.html", habits=user.habits,
+                               influences=user.influences,
+                               symptoms=user.symptoms)
     else:
         redirect("/")
 
@@ -198,7 +196,11 @@ def add_new_symptom():
 def show_track_page():
     """Show the page where you can track a Habit, Influence, or Symptom."""
     if "user_id" in session:
-        return render_template("track.html")
+        user_id = session["user_id"]
+        user = User.query.get(user_id)
+        return render_template("track.html", habits=user.habits,
+                               influences=user.influences,
+                               symptoms=user.symptoms)
     else:
         redirect("/")
 
@@ -207,19 +209,20 @@ def show_track_page():
 def track_habit():
     """Instantiate a new HabitEvent."""
 
-    habit_label = request.form.get("label")
-    habit = Habit.query.filter_by(label=habit_label).one()
-    habit_id = habit.id
-
     user_id = session["user_id"]
     num_units = request.form.get("num_units")
+
+    habit_label = request.form.get("label")
+    habit = db.session.query(Habit).filter(Habit.label == habit_label, Habit.user_id == user_id).one()
+    habit_id = habit.id
 
     # if the user entered a datetime, use that. if not, use current time.
     timestamp = get(request.form.get("datetime"), now())
 
     # get location from browser?
     # only get location when something is tracked or track all the time?
-    latitude = None
+    location = request.form.get("location")
+    latitude = get(request.form.get("latitude"))
     longitude = None
 
     new_habit_event = HabitEvent(user_id=user_id, habit_id=habit_id, 

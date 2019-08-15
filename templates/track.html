@@ -4,25 +4,89 @@
 
 {% block body %}
 <h3>Track a Habit:</h3>
-<form>
-    drop
-    <input type="" name=""> 
-    <input type="" name="">
-    <input type="" name="">
-    <input type="" name="">
+<form action="/add-habit-event" method="POST">
+    <label>Habit: 
+        <select name="label">
+            {% for habit in habits %}
+                <option value={{habit.id}}>{{ habit.label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <br>
+    <label>
+        Units: <input type="number" name="num_units">
+    </label>
+    <br>
+    <label>
+        Date/Time: <input type="datetime-local" name="datetime">
+    </label>
+    <br>
+    <label>
+        Zipcode: <input type="zipcode" name="location">
+    </label>
+    <br>
+    <input type="submit">
 </form>
 <br>
 <br>
 <br>
+
+
 <h3>Track an Influence:</h3>
-<form>
-    
+<form action="/add-influence-event" method="POST">
+    <label>Influence: 
+        <select name="label">
+            {% for influence in influences %}
+                <option value={{influence.id}}>{{ influence.label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <br>
+    <label>
+        Intensity: <input type="number" name="intensity">
+    </label>
+    <br>
+    <label>
+        Date/Time: <input type="datetime-local" name="datetime">
+    </label>
+    <br>
+    <label>
+        Zipcode: <input type="zipcode" name="location">
+    </label>
+    <br>
+    <input type="submit">
 </form>
 <br>
 <br>
 <br>
+
+
 <h3>Track a Symptom:</h3>
-<form>
-    
+<form action="/add-symptom-event" method="POST">
+    <label>Symptom: 
+        <select name="label">
+            {% for symptom in symptoms %}
+                <option value={{symptom.id}}>{{ symptom.label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <br>
+    <label>
+        Intensity: <input type="number" name="intensity">
+    </label>
+    <br>
+    <label>
+        Date/Time: <input type="datetime-local" name="datetime">
+    </label>
+    <br>
+    <label>
+        Zipcode: <input type="zipcode" name="location">
+    </label>
+    <br>
+    <input type="submit">
 </form>
+<br>
+<br>
+<br>
+
 {% endblock %}
