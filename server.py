@@ -25,8 +25,10 @@ def connect_to_db(app):
 @app.route("/")
 def show_homepage():
     """Show homepage."""
-
-    return render_template("index.html")
+    if "username" not in session:
+        return redirect("/login")
+    else:
+        return redirect("/track")
 
 
 @app.route("/login")
@@ -70,7 +72,7 @@ def login():
 
     flash("Login successful")
 
-    return redirect("/")
+    return redirect("/track")
 
 
 @app.route("/register")
@@ -121,7 +123,7 @@ def register():
 
     login()
 
-    return redirect("/")
+    return redirect("/track")
 
 
 @app.route("/logout")
@@ -130,7 +132,7 @@ def log_out():
     
     session.clear()
 
-    return redirect("/")
+    return redirect("/login")
 
 
 # add something new you want to track
@@ -145,7 +147,7 @@ def show_add_new_form():
                                influences=user.influences,
                                symptoms=user.symptoms)
     else:
-        redirect("/")
+        redirect("/login")
 
 
 @app.route("/new-habit", methods=["POST"])
@@ -222,7 +224,7 @@ def show_track_page():
                                influences=user.influences,
                                symptoms=user.symptoms)
     else:
-        redirect("/")
+        redirect("/login")
 
 
 @app.route("/add-habit-event", methods=["POST"])
@@ -245,8 +247,16 @@ def track_habit():
     # get location from browser?
     # only get location when something is tracked or track all the time?
     location = request.form.get("location")
-    latitude = request.form.get("latitude")
-    longitude = request.form.get("longitude")
+    zipcode = request.form.get("zipcode")
+    latitude = None
+    longitude = None
+
+    if location:
+        coords = location.split(",")
+        latitude = float(coords[0])
+        longitude = float(coords[1])
+    if zipcode:
+        pass    # get coords from zip
 
     new_habit_event = HabitEvent(user_id=user_id, habit_id=habit_id, 
                                  num_units=num_units, timestamp=timestamp,
@@ -254,9 +264,7 @@ def track_habit():
     db.session.add(new_habit_event)
     db.session.commit()
 
-    flash("Habit tracked successfully!")
-
-    return redirect("/track")
+    return "Habit tracked successfully!"
 
 
 @app.route("/add-influence-event", methods=["POST"])

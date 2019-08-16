@@ -4,9 +4,9 @@
 
 {% block body %}
 <h3>Track a Habit:</h3>
-<form action="/add-habit-event" method="POST">
+<form action="/add-habit-event" method="POST" id="habit-event-form">
     <label>Habit: 
-        <select name="habit">
+        <select name="habit" id="habit" required>
             {% for habit in habits %}
                 <option value={{habit.id}}>{{ habit.label }}</option>
             {% endfor %}
@@ -14,18 +14,22 @@
     </label>
     <br>
     <label>
-        Units: <input type="number" name="num_units">
+        Units: <input type="number" name="num_units" id="num_units" required> [units]
     </label>
     <br>
     <label>
-        Date/Time: <input type="datetime-local" name="datetime">
+        Date/Time: <input type="datetime-local" name="datetime" id="datetime">
     </label>
     <br>
     <label>
-        Zipcode: <input type="zipcode" name="location">
+        <button class="location-button">Get My Location</button>
+        <input type="zipcode" name="location" id="location">
+        <br>
+        or enter zip code: <input type="text" name="zipcode" id="zipcode">
+        
     </label>
     <br>
-    <input type="submit">
+    <input type="submit" id="habit-submut-button">
 </form>
 <br>
 <br>
@@ -35,7 +39,7 @@
 <h3>Track an Influence:</h3>
 <form action="/add-influence-event" method="POST">
     <label>Influence: 
-        <select name="influence">
+        <select name="influence" required>
             {% for influence in influences %}
                 <option value={{influence.id}}>{{ influence.label }}</option>
             {% endfor %}
@@ -64,7 +68,7 @@
 <h3>Track a Symptom:</h3>
 <form action="/add-symptom-event" method="POST">
     <label>Symptom: 
-        <select name="symptom">
+        <select name="symptom" required>
             {% for symptom in symptoms %}
                 <option value={{symptom.id}}>{{ symptom.label }}</option>
             {% endfor %}
@@ -85,9 +89,52 @@
     <br>
     <input type="submit">
 </form>
+<br>
+<br>
+<br>
+<div id="display-location" hidden></div>
 
 
 
+<script>
+
+// location
+    function getLocation(event) {
+        event.preventDefault();
+        navigator.geolocation.getCurrentPosition(function (position) {
+                $("#location").val(`${position.coords.latitude},${position.coords.longitude}`);
+            });
+        alert("Location retrieved");
+    }
+        
+    $(".location-button").on('click', getLocation);
+
+
+
+function trackHabit(event) {
+    event.preventDefault();
+    debugger
+
+    const inputs = { 
+        'habit': $("#habit").val(), 
+        'num_units': $("#num_units").val(),
+        'datetime': $("#datetime").val(), 
+        'location': $("#location-password").val(),
+        'zipcode': $("#zipcode").val()
+    };
+
+    $.post("/add-habit-event", inputs, function (response) {
+        if (response == "Habit tracked successfully!") {
+            alert(response);
+            $("#habit-event-form")[0].reset();
+        }
+    });
+
+}
+    
+$('#habit-event-form input[type="submit"]').on('click', trackHabit);
+    
+</script>
 
 
 
