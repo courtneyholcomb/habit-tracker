@@ -2,9 +2,14 @@
 
 from flask import Flask, render_template, redirect, flash, request, session
 from flask_debugtoolbar import DebugToolbarExtension
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 from pytemperature import k2f
+import pickle
+import os.path
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 
 from models import *
 
@@ -343,7 +348,7 @@ def track_symptom():
 
 
 def track_current_weather(latitude, longitude):
-    """Get weather info based on `datetime` and `location`."""
+    """Track user's current weather & temp info."""
     lat = latitude
     lon = longitude
 
@@ -372,6 +377,79 @@ def track_current_weather(latitude, longitude):
     db.session.add(temp_event)
     db.session.add(weather_event)
     db.session.commit()
+
+
+def enable_gcal():
+    """Have user authenticate GCal, or verify they already have."""
+
+    creds = None
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
+
+    service = build('calendar', 'v3', credentials=creds)
+
+    return service
+
+@app.route("/track-gcal-habits", methods=["POST"])
+def get_events():
+    """Gets events with `keyword` in title and tracks them as `habit_id`."""
+
+    service = enable_gcal()
+
+    dt_start = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
+    dt_end = datetime.utcnow().isoformat() + 'Z'
+
+    calendars = service.calendarList().list().execute()['items']
+    events = []
+    
+    for calendar in calendars:
+        events_result = service.events().list(calendarId=calendar['id'],
+                                        timeMin=dt_start, timeMax=dt_end,
+                                        singleEvents=True,
+                                        orderBy='startTime').execute()
+        events += events_result["items"]
+
+    user = User.query.get(session["user_id"])
+    habits = user.habits
+
+    events_tracked = ""
+    # if any events have habit labels in the title, track them as habit events
+    for event in events:
+        start = event['start'].get('dateTime', event['start'].get('date'))
+        end = event['end'].get('dateTime', event['end'].get('date'))
+        title = event['summary']
+        for habit in habits:
+            if habit.label.lower() in title.lower():
+                habit_event = HabitEvent(user_id=user.id,
+                                         habit_id=habit.id, 
+                                         num_units=1, timestamp=start)
+                # later: get lat & lon from gcal event location
+                                #,latitude=latitude, longitude=longitude)
+                # prevent duplicates
+                old_habits = db.session.query(HabitEvent)
+                duplicate = old_habits.filter(HabitEvent.user_id == habit_event.user_id,
+                                HabitEvent.timestamp == habit_event.timestamp,
+                                HabitEvent.habit_id == habit_event.habit_id).all()
+                if not duplicate:
+                    db.session.add(habit_event)
+                    events_tracked += f"Habit: {habit.label}, Event: {title} {start}\n"
+
+    db.session.commit()
+
+    return events_tracked
+
 
 
 # add a route to view your data

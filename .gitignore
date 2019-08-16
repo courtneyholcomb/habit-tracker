@@ -1,2 +1,6 @@
 env
 __pycache__
+.DS_Store
+credentials.json
+quickstart.py
+token.pickle

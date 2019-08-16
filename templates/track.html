@@ -3,6 +3,10 @@
 {% block title %}Tracking{% endblock %}
 
 {% block body %}
+<br>
+<button id="gcal-habits-button">Pull habits from GCal for past week</button>
+<br>
+
 <h3>Track a Habit:</h3>
 <form action="/add-habit-event" method="POST" id="habit-event-form">
     <label>Habit: 
@@ -31,6 +35,7 @@
 <br>
 <br>
 <br>
+
 
 
 <h3>Track an Influence:</h3>
@@ -205,6 +210,19 @@ function trackSymptom(event) {
 }
     
 $('#symptom-event-form input[type="submit"]').on('click', trackSymptom);
+
+
+
+function trackGcalHabits(event) {
+    event.preventDefault();
+    
+    $.post("/track-gcal-habits", function (response) {
+        alert(`Events tracked:\n${response}`);
+
+    });
+}
+
+$("#gcal-habits-button").on('click', trackGcalHabits);
 
 </script>
 {% endblock %}
