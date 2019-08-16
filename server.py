@@ -363,17 +363,15 @@ def track_current_weather(latitude, longitude):
                                 intensity=current_temp_f, timestamp=timestamp,
                                 latitude=lat, longitude=lon)
 
-    db.session.add(temp_event)
-    db.session.commit()
-    
-    # diff influence for each type of weather? or make intensity column more flexible/able to take a string?
-    # figure out what all possible weather options are and make a diff influence for each?
-    # weather_detail = weather_info['weather']['main']
-    # weather_infl = Influence.query.filter_by(label=???)
-    # weather_event = InfluenceEvent(user_id=user_id, influence_id=weather_inf.id,
-    #                                intensity=???, timestamp=timestamp,
-    #                                latitude=lat, longitude=lon)
+    weather_id = weather_info['weather'][0]['id']
+    weather_infl = Influence.query.filter_by(label='weather').one()
+    weather_event = InfluenceEvent(user_id=user_id, influence_id=weather_infl.id,
+                                   intensity=weather_id, timestamp=timestamp,
+                                   latitude=lat, longitude=lon)
 
+    db.session.add(temp_event)
+    db.session.add(weather_event)
+    db.session.commit()
 
 
 # add a route to view your data
