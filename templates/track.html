@@ -18,15 +18,14 @@
     </label>
     <br>
     <label>
-        Date/Time: <input type="datetime-local" name="datetime" id="datetime">
+        Date/Time (optional): <input type="datetime-local" name="habit-datetime" id="habit-datetime">
     </label>
     <br>
     <label>
         <button class="location-button">Get My Location</button>
-        <input type="zipcode" name="location" id="location">
+        <input type="text" name="habit-location" id="habit-location">
         <br>
-        or enter zip code: <input type="text" name="zipcode" id="zipcode">
-        
+        or enter zip code: <input type="zipcode" name="habit-zipcode" id="habit-zipcode">
     </label>
     <br>
     <input type="submit" id="habit-submut-button">
@@ -37,9 +36,9 @@
 
 
 <h3>Track an Influence:</h3>
-<form action="/add-influence-event" method="POST">
+<form action="/add-influence-event" method="POST" id="influence-event-form">
     <label>Influence: 
-        <select name="influence" required>
+        <select name="influence" id="influence" required>
             {% for influence in influences %}
                 <option value={{influence.id}}>{{ influence.label }}</option>
             {% endfor %}
@@ -47,18 +46,21 @@
     </label>
     <br>
     <label>
-        Intensity: <input type="number" name="intensity">
+        Intensity: <input type="number" name="influence-intensity" id="influence-intensity">
     </label>
     <br>
     <label>
-        Date/Time: <input type="datetime-local" name="datetime">
+        Date/Time (optional): <input type="datetime-local" name="influence-datetime">
     </label>
     <br>
     <label>
-        Zipcode: <input type="zipcode" name="location">
+        <button class="location-button">Get My Location</button>
+        <input type="text" name="influence-location" id="influence-location">
+        <br>
+        or enter zip code: <input type="zipcode" name="influence-zipcode" id="influence-zipcode">
     </label>
     <br>
-    <input type="submit">
+    <input type="submit" id="influence-submut-button">
 </form>
 <br>
 <br>
@@ -66,9 +68,9 @@
 
 
 <h3>Track a Symptom:</h3>
-<form action="/add-symptom-event" method="POST">
+<form action="/add-symptom-event" method="POST" id="symptom-event-form">
     <label>Symptom: 
-        <select name="symptom" required>
+        <select name="symptom" id="symptom" required>
             {% for symptom in symptoms %}
                 <option value={{symptom.id}}>{{ symptom.label }}</option>
             {% endfor %}
@@ -76,51 +78,53 @@
     </label>
     <br>
     <label>
-        Intensity: <input type="number" name="intensity">
+        Intensity: <input type="number" name="symptom-intensity" id="symptom-intensity">
     </label>
     <br>
     <label>
-        Date/Time: <input type="datetime-local" name="datetime">
+        Date/Time (optional): <input type="datetime-local" name="symptom-datetime">
     </label>
     <br>
     <label>
-        Zipcode: <input type="zipcode" name="location">
+        <button class="location-button">Get My Location</button>
+        <input type="text" name="syptom-location" id="syptom-location">
+        <br>
+        or enter zip code: <input type="zipcode" name="syptom-zipcode" id="syptom-zipcode">
     </label>
     <br>
-    <input type="submit">
+    <input type="submit" id="syptom-submut-button">
 </form>
 <br>
 <br>
 <br>
-<div id="display-location" hidden></div>
 
 
 
 <script>
 
-// location
-    function getLocation(event) {
-        event.preventDefault();
-        navigator.geolocation.getCurrentPosition(function (position) {
-                $("#location").val(`${position.coords.latitude},${position.coords.longitude}`);
-            });
-        alert("Location retrieved");
-    }
-        
-    $(".location-button").on('click', getLocation);
+// *** HABITS ***
+
+function getHabitLocation(event) {
+    event.preventDefault();
+    navigator.geolocation.getCurrentPosition(function (position) {
+            $("#habit-location").val(`${position.coords.latitude},${position.coords.longitude}`);
+        });
+    alert("Location retrieved");
+}
+    
+$(".location-button").on('click', getHabitLocation);
 
 
 
 function trackHabit(event) {
     event.preventDefault();
-    debugger
 
     const inputs = { 
         'habit': $("#habit").val(), 
         'num_units': $("#num_units").val(),
-        'datetime': $("#datetime").val(), 
-        'location': $("#location-password").val(),
-        'zipcode': $("#zipcode").val()
+        'datetime': $("#habit-datetime").val(), 
+        'location': $("#habit-location").val(),
+        'zipcode': $("#habit-zipcode").val()
     };
 
     $.post("/add-habit-event", inputs, function (response) {
@@ -133,11 +137,85 @@ function trackHabit(event) {
 }
     
 $('#habit-event-form input[type="submit"]').on('click', trackHabit);
+
+
+// *** INFLUENCES ***
+
+function getInfluenceLocation(event) {
+    event.preventDefault();
+    navigator.geolocation.getCurrentPosition(function (position) {
+            $("#influence-location").val(`${position.coords.latitude},${position.coords.longitude}`);
+        });
+    alert("Location retrieved");
+}
     
+$(".location-button").on('click', getInfluenceLocation);
+
+
+
+function trackInfluence(event) {
+    event.preventDefault();
+
+    const inputs = { 
+        'influence': $("#influence").val(), 
+        'intensity': $("#influence-intensity").val(),
+        'datetime': $("#influence-datetime").val(), 
+        'location': $("#influence-location").val(),
+        'zipcode': $("#influence-zipcode").val()
+    };
+
+    $.post("/add-influence-event", inputs, function (response) {
+        if (response == "Influence tracked successfully!") {
+            alert(response);
+            $("#influence-event-form")[0].reset();
+        }
+    });
+
+}
+    
+$('#influence-event-form input[type="submit"]').on('click', trackInfluence);
+
+
+
+
+
+// *** SYMPTOMS ***
+
+function getSymptomLocation(event) {
+    event.preventDefault();
+    navigator.geolocation.getCurrentPosition(function (position) {
+            $("#symptom-location").val(`${position.coords.latitude},${position.coords.longitude}`);
+        });
+    alert("Location retrieved");
+}
+    
+$(".location-button").on('click', getSymptomLocation);
+
+
+
+function trackSymptom(event) {
+    event.preventDefault();
+
+    const inputs = { 
+        'symptom': $("#symptom").val(), 
+        'intensity': $("#symptom-intensity").val(),
+        'datetime': $("#symptom-datetime").val(), 
+        'location': $("#symptom-location").val(),
+        'zipcode': $("#symptom-zipcode").val()
+    };
+
+    $.post("/add-symptom-event", inputs, function (response) {
+        if (response == "Symptom tracked successfully!") {
+            alert(response);
+            $("#symptom-event-form")[0].reset();
+        }
+    });
+
+}
+    
+$('#symptom-event-form input[type="submit"]').on('click', trackSymptom);
+
 </script>
-
-
-
 {% endblock %}
 
 

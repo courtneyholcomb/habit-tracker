@@ -238,16 +238,14 @@ def track_habit():
     habit = Habit.query.get(habit_id)
 
     # if the user entered a datetime, use that. if not, use current time.
-    time_input = request.form.get("datetime")
+    time_input = request.form.get("habit-datetime")
     if time_input:
         timestamp = datetime.fromisoformat(time_input)
     else:
         timestamp = datetime.now()
 
-    # get location from browser?
-    # only get location when something is tracked or track all the time?
-    location = request.form.get("location")
-    zipcode = request.form.get("zipcode")
+    location = request.form.get("habit-location")
+    zipcode = request.form.get("habit-zipcode")
     latitude = None
     longitude = None
 
@@ -278,17 +276,23 @@ def track_influence():
     influence = Influence.query.get(influence_id)
 
     # if the user entered a datetime, use that. if not, use current time.
-    time_input = request.form.get("datetime")
+    time_input = request.form.get("influence-datetime")
     if time_input:
         timestamp = datetime.fromisoformat(time_input)
     else:
         timestamp = datetime.now()
 
-    # get location from browser?
-    # only get location when something is tracked or track all the time?
-    location = request.form.get("location")
-    latitude = request.form.get("latitude")
-    longitude = request.form.get("longitude")
+    location = request.form.get("influence-location")
+    zipcode = request.form.get("influence-zipcode")
+    latitude = None
+    longitude = None
+
+    if location:
+        coords = location.split(",")
+        latitude = float(coords[0])
+        longitude = float(coords[1])
+    if zipcode:
+        pass    # get coords from zip
 
     new_influence_event = InfluenceEvent(user_id=user_id,
                                          influence_id=influence_id, 
@@ -298,9 +302,7 @@ def track_influence():
     db.session.add(new_influence_event)
     db.session.commit()
 
-    flash("Influence tracked successfully!")
-
-    return redirect("/track")
+    return "Influence tracked successfully!"
 
 
 @app.route("/add-symptom-event", methods=["POST"])
@@ -314,15 +316,23 @@ def track_symptom():
     symptom = Symptom.query.get(symptom_id)
 
     # if the user entered a datetime, use that. if not, use current time.
-    time_input = request.form.get("datetime")
+    time_input = request.form.get("symptom-datetime")
     if time_input:
         timestamp = datetime.fromisoformat(time_input)
     else:
         timestamp = datetime.now()
 
-    location = request.form.get("location")
-    latitude = request.form.get("latitude")
-    longitude = request.form.get("longitude")
+    location = request.form.get("symptom-location")
+    zipcode = request.form.get("symptom-zipcode")
+    latitude = None
+    longitude = None
+
+    if location:
+        coords = location.split(",")
+        latitude = float(coords[0])
+        longitude = float(coords[1])
+    if zipcode:
+        pass    # get coords from zip
 
     new_symptom_event = SymptomEvent(user_id=user_id,
                                          symptom_id=symptom_id, 
@@ -332,9 +342,7 @@ def track_symptom():
     db.session.add(new_symptom_event)
     db.session.commit()
 
-    flash("Symptom tracked successfully!")
-
-    return redirect("/track")
+    return "Symptom tracked successfully!"
 
 
 
