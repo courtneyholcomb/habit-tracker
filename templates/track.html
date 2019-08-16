@@ -24,8 +24,6 @@
     <label>
         <button class="location-button">Get My Location</button>
         <input type="text" name="habit-location" id="habit-location">
-        <br>
-        or enter zip code: <input type="zipcode" name="habit-zipcode" id="habit-zipcode">
     </label>
     <br>
     <input type="submit" id="habit-submut-button">
@@ -56,8 +54,6 @@
     <label>
         <button class="location-button">Get My Location</button>
         <input type="text" name="influence-location" id="influence-location">
-        <br>
-        or enter zip code: <input type="zipcode" name="influence-zipcode" id="influence-zipcode">
     </label>
     <br>
     <input type="submit" id="influence-submut-button">
@@ -88,8 +84,6 @@
     <label>
         <button class="location-button">Get My Location</button>
         <input type="text" name="syptom-location" id="syptom-location">
-        <br>
-        or enter zip code: <input type="zipcode" name="syptom-zipcode" id="syptom-zipcode">
     </label>
     <br>
     <input type="submit" id="syptom-submut-button">
@@ -123,8 +117,7 @@ function trackHabit(event) {
         'habit': $("#habit").val(), 
         'num_units': $("#num_units").val(),
         'datetime': $("#habit-datetime").val(), 
-        'location': $("#habit-location").val(),
-        'zipcode': $("#habit-zipcode").val()
+        'location': $("#habit-location").val()
     };
 
     $.post("/add-habit-event", inputs, function (response) {
@@ -160,8 +153,7 @@ function trackInfluence(event) {
         'influence': $("#influence").val(), 
         'intensity': $("#influence-intensity").val(),
         'datetime': $("#influence-datetime").val(), 
-        'location': $("#influence-location").val(),
-        'zipcode': $("#influence-zipcode").val()
+        'location': $("#influence-location").val()
     };
 
     $.post("/add-influence-event", inputs, function (response) {
@@ -200,8 +192,7 @@ function trackSymptom(event) {
         'symptom': $("#symptom").val(), 
         'intensity': $("#symptom-intensity").val(),
         'datetime': $("#symptom-datetime").val(), 
-        'location': $("#symptom-location").val(),
-        'zipcode': $("#symptom-zipcode").val()
+        'location': $("#symptom-location").val()
     };
 
     $.post("/add-symptom-event", inputs, function (response) {

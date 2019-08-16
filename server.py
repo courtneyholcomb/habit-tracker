@@ -3,6 +3,8 @@
 from flask import Flask, render_template, redirect, flash, request, session
 from flask_debugtoolbar import DebugToolbarExtension
 from datetime import datetime
+import requests
+from pytemperature import k2f
 
 from models import *
 
@@ -245,7 +247,6 @@ def track_habit():
         timestamp = datetime.now()
 
     location = request.form.get("habit-location")
-    zipcode = request.form.get("habit-zipcode")
     latitude = None
     longitude = None
 
@@ -253,8 +254,6 @@ def track_habit():
         coords = location.split(",")
         latitude = float(coords[0])
         longitude = float(coords[1])
-    if zipcode:
-        pass    # get coords from zip
 
     new_habit_event = HabitEvent(user_id=user_id, habit_id=habit_id, 
                                  num_units=num_units, timestamp=timestamp,
@@ -283,7 +282,7 @@ def track_influence():
         timestamp = datetime.now()
 
     location = request.form.get("influence-location")
-    zipcode = request.form.get("influence-zipcode")
+
     latitude = None
     longitude = None
 
@@ -291,8 +290,6 @@ def track_influence():
         coords = location.split(",")
         latitude = float(coords[0])
         longitude = float(coords[1])
-    if zipcode:
-        pass    # get coords from zip
 
     new_influence_event = InfluenceEvent(user_id=user_id,
                                          influence_id=influence_id, 
@@ -323,7 +320,6 @@ def track_symptom():
         timestamp = datetime.now()
 
     location = request.form.get("symptom-location")
-    zipcode = request.form.get("symptom-zipcode")
     latitude = None
     longitude = None
 
@@ -331,8 +327,6 @@ def track_symptom():
         coords = location.split(",")
         latitude = float(coords[0])
         longitude = float(coords[1])
-    if zipcode:
-        pass    # get coords from zip
 
     new_symptom_event = SymptomEvent(user_id=user_id,
                                          symptom_id=symptom_id, 
@@ -345,6 +339,35 @@ def track_symptom():
     return "Symptom tracked successfully!"
 
 
+def track_current_weather(latitude, longitude):
+    """Get weather info based on `datetime` and `location`."""
+    lat = latitude
+    lon = longitude
+
+    response_obj = requests.get(f"http://http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&APPID=d5dffb69aad97a8a136ece32fe31a774")
+    weather_info = response_obj.json()
+    weather = weather_info['weather']['description']
+
+    temp_info = weather_info['main']
+    current_temp_f = k2f(temp_info['temp'])
+
+    user_id = session["user_id"]
+    timestamp = datetime.now()
+    
+
+    temp_infl = Influence.query.filter_by(label="temperature")
+    temp_event = InfluenceEvent(user_id=user_id, influence_id=temp_infl.id,
+                                intensity=current_temp_f, timestamp=timestamp,
+                                latitude=lat, longitude=lon)
+    
+    # diff influence for each type of weather? or make intensity column more flexible/able to take a string?
+    # figure out what all possible weather options are and make a diff influence for each?
+    weather_infl = Influence.query.filter_by(label=???)
+    weather_event = InfluenceEvent(user_id=user_id, influence_id=weather_inf.id,
+                                   intensity=???, timestamp=timestamp,
+                                   latitude=lat, longitude=lon)
+
+
 
 # add a route to view your data
 
@@ -355,4 +378,4 @@ if __name__ == "__main__":
     connect_to_db(app)
     DebugToolbarExtension(app)
 
-    app.run(port=5000, host='0.0.0.0')
+    # app.run(port=5000, host='0.0.0.0')
