@@ -240,13 +240,13 @@ def track_habit():
     habit = Habit.query.get(habit_id)
 
     # if the user entered a datetime, use that. if not, use current time.
-    time_input = request.form.get("habit-datetime")
+    time_input = request.form.get("datetime")
     if time_input:
         timestamp = datetime.fromisoformat(time_input)
     else:
         timestamp = datetime.now()
 
-    location = request.form.get("habit-location")
+    location = request.form.get("location")
     latitude = None
     longitude = None
 
@@ -254,6 +254,7 @@ def track_habit():
         coords = location.split(",")
         latitude = float(coords[0])
         longitude = float(coords[1])
+        track_current_weather(latitude, longitude)
 
     new_habit_event = HabitEvent(user_id=user_id, habit_id=habit_id, 
                                  num_units=num_units, timestamp=timestamp,
@@ -275,13 +276,13 @@ def track_influence():
     influence = Influence.query.get(influence_id)
 
     # if the user entered a datetime, use that. if not, use current time.
-    time_input = request.form.get("influence-datetime")
+    time_input = request.form.get("datetime")
     if time_input:
         timestamp = datetime.fromisoformat(time_input)
     else:
         timestamp = datetime.now()
 
-    location = request.form.get("influence-location")
+    location = request.form.get("location")
 
     latitude = None
     longitude = None
@@ -290,6 +291,7 @@ def track_influence():
         coords = location.split(",")
         latitude = float(coords[0])
         longitude = float(coords[1])
+        track_current_weather(latitude, longitude)
 
     new_influence_event = InfluenceEvent(user_id=user_id,
                                          influence_id=influence_id, 
@@ -313,13 +315,13 @@ def track_symptom():
     symptom = Symptom.query.get(symptom_id)
 
     # if the user entered a datetime, use that. if not, use current time.
-    time_input = request.form.get("symptom-datetime")
+    time_input = request.form.get("datetime")
     if time_input:
         timestamp = datetime.fromisoformat(time_input)
     else:
         timestamp = datetime.now()
 
-    location = request.form.get("symptom-location")
+    location = request.form.get("location")
     latitude = None
     longitude = None
 
@@ -327,6 +329,7 @@ def track_symptom():
         coords = location.split(",")
         latitude = float(coords[0])
         longitude = float(coords[1])
+        track_current_weather(latitude, longitude)
 
     new_symptom_event = SymptomEvent(user_id=user_id,
                                          symptom_id=symptom_id, 
@@ -344,9 +347,9 @@ def track_current_weather(latitude, longitude):
     lat = latitude
     lon = longitude
 
-    response_obj = requests.get(f"http://http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&APPID=d5dffb69aad97a8a136ece32fe31a774")
+    response_obj = requests.get(f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&APPID=d5dffb69aad97a8a136ece32fe31a774")
+
     weather_info = response_obj.json()
-    weather = weather_info['weather']['description']
 
     temp_info = weather_info['main']
     current_temp_f = k2f(temp_info['temp'])
@@ -355,17 +358,21 @@ def track_current_weather(latitude, longitude):
     timestamp = datetime.now()
     
 
-    temp_infl = Influence.query.filter_by(label="temperature")
+    temp_infl = Influence.query.filter_by(label="temperature").one()
     temp_event = InfluenceEvent(user_id=user_id, influence_id=temp_infl.id,
                                 intensity=current_temp_f, timestamp=timestamp,
                                 latitude=lat, longitude=lon)
+
+    db.session.add(temp_event)
+    db.session.commit()
     
     # diff influence for each type of weather? or make intensity column more flexible/able to take a string?
     # figure out what all possible weather options are and make a diff influence for each?
-    weather_infl = Influence.query.filter_by(label=???)
-    weather_event = InfluenceEvent(user_id=user_id, influence_id=weather_inf.id,
-                                   intensity=???, timestamp=timestamp,
-                                   latitude=lat, longitude=lon)
+    # weather_detail = weather_info['weather']['main']
+    # weather_infl = Influence.query.filter_by(label=???)
+    # weather_event = InfluenceEvent(user_id=user_id, influence_id=weather_inf.id,
+    #                                intensity=???, timestamp=timestamp,
+    #                                latitude=lat, longitude=lon)
 
 
 
@@ -378,4 +385,4 @@ if __name__ == "__main__":
     connect_to_db(app)
     DebugToolbarExtension(app)
 
-    # app.run(port=5000, host='0.0.0.0')
+    app.run(port=5000, host='0.0.0.0')
