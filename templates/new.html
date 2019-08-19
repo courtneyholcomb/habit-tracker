@@ -99,6 +99,8 @@ function addEventType(event) {
         alert(response);
         if (response.includes("added successfully")) {
             $("#new-form")[0].reset();
+            $("#unit-or-scale").html(`<label> Unit of measurement: 
+            <input type="text" name="unit" id="unit" required></label>`);
         }
     });
 }
