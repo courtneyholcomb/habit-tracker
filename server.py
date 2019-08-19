@@ -143,81 +143,47 @@ def log_out():
 
 
 # add something new you want to track
-@app.route("/add-new")
+@app.route("/new")
 def show_add_new_form():
     """Show the page where you can create a new Habit, Influence, or Symptom."""
 
     if "user_id" in session:
         user_id = session["user_id"]
         user = User.query.get(user_id)
-        return render_template("add-new.html", habits=user.habits,
+        return render_template("new.html", habits=user.habits,
                                influences=user.influences,
                                symptoms=user.symptoms)
     else:
         redirect("/login")
 
 
-@app.route("/new-habit", methods=["POST"])
-def add_new_habit():
-    """Instantiate a new Habit."""
+@app.route("/new", methods=["POST"])
+def add_new_event_type():
+    """Instantiate a new Habit, Influence, or Symptom."""
 
+    event_type = request.form.get("eventType")
     label = request.form.get("label")
     unit = request.form.get("unit")
 
     user_id = session["user_id"]
     user = User.query.get(user_id)
 
-    habit_labels = [habit.label for habit in user.habits]
+    if event_type == "habit":
+        labels = [habit.label for habit in user.habits]
+        new_event = Habit(label=label, unit=unit, user_id=user_id)
+    elif event_type == "influence":
+        labels = [influence.label for influence in user.influences]
+        new_event = Influence(label=label, scale=unit, user_id=user_id)
+    elif event_type == "symptom":
+        labels = [symptom.label for symptom in user.symptoms]
+        new_event = Symptom(label=label, scale=unit, user_id=user_id)
 
-    if label not in habit_labels:
-        new_habit = Habit(label=label, unit=unit, user_id=user_id)
-        db.session.add(new_habit)
+    if label not in labels:
+        db.session.add(new_event)
         db.session.commit()
-        return "New habit added successfully."
+        return f"New {event_type} added successfully!"
     else:
-        return "You already have a habit with that title." 
-
-
-@app.route("/new-influence", methods=["POST"])
-def add_new_influence():
-    """Instantiate a new Influence."""
-
-    label = request.form.get("label")
-    scale = request.form.get("scale")
-
-    user_id = session["user_id"]
-    user = User.query.get(user_id)
-
-    influence_labels = [influence.label for influence in user.influences]
-
-    if label not in influence_labels:
-        new_influence = Influence(label=label, scale=scale, user_id=user_id)
-        db.session.add(new_influence)
-        db.session.commit()
-        return "New influence added successfully."
-    else:
-        return "You already have an influence with that title."
-
-
-@app.route("/new-symptom", methods=["POST"])
-def add_new_symptom():
-    """Instantiate a new Symptom."""
-
-    label = request.form.get("label")
-    scale = request.form.get("scale")
-
-    user_id = session["user_id"]
-    user = User.query.get(user_id)
-
-    symptom_labels = [symptom.label for symptom in user.symptoms]
-
-    if label not in symptom_labels:
-        new_symptom = Symptom(label=label, scale=scale, user_id=user_id)
-        db.session.add(new_symptom)
-        db.session.commit()
-        return "New symptom added successfully."
-    else:
-        return "You already have a symptom with that title."
+        return f"You already have a(n) {event_type} with that title." 
 
 
 # track something
@@ -429,9 +395,10 @@ def get_events():
     for event in events:
         start = event['start'].get('dateTime', event['start'].get('date'))
         end = event['end'].get('dateTime', event['end'].get('date'))
-        title = event['summary']
+        title = event['summary'].lower()
+        title_words = title.split()
         for habit in habits:
-            if habit.label.lower() in title.lower():
+            if habit.label.lower() in title_words:
                 habit_event = HabitEvent(user_id=user.id,
                                          habit_id=habit.id, 
                                          num_units=1, timestamp=start)

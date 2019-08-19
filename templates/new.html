@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Add Something New{% endblock %}
+
+{% block body %}
+<h3>New Habit, Influence, or Symptom</h3>
+<form action="/new" method="POST" id="new-form">
+    <label>
+        Type: <select id="event-type">
+                <option name="event-type" value="habit">Habit</option>
+                <option name="event-type" value="influence">Influence</option>
+                <option name="event-type" value="symptom">Symptom</option>
+        </select>
+    </label>
+    <br>
+    <label>
+        Title: <input type="text" name="label" id="label">
+    </label>
+    <br>
+    <div id="unit-or-scale">
+        <label>
+            Unit of measurement: <input type="text" name="unit" id="unit">
+        </label>
+    </div>
+    <br>
+    <input type="submit">
+</form>
+<br>
+<h3>Habits Tracked:</h3>
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Unit</th>
+    </tr>
+    {% for habit in habits %}
+        <tr>
+            <td>{{ habit.label }}</td>
+            <td>{{ habit.unit }}</td>
+        </tr>
+    {% endfor %}
+</table>
+<br>
+<h3>Influences Tracked:</h3>
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Scale</th>
+    </tr>
+    {% for influence in influences %}
+        <tr>
+            <td>{{ influence.label }}</td>
+            <td>{{ influence.scale }}</td>
+        </tr>
+    {% endfor %}
+</table>
+<br>
+<h3>Symptoms Tracked:</h3>
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Scale</th>
+    </tr>
+    {% for symptom in symptoms %}
+        <tr>
+            <td>{{ symptom.label }}</td>
+            <td>{{ symptom.scale }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+
+<script>
+
+let eventInput = $("#event-type")
+
+eventInput.on("change", function() {
+
+    if (eventInput.val() == "influence" || eventInput.val() == "symptom") {
+        $("#unit-or-scale").html(`<label> Intensity scale: 0 to 
+            <input type="number" name="unit" id="unit" required></label>`);
+    } else if (eventInput.val() == "habit") {
+        $("#unit-or-scale").html(`<label> Unit of measurement: 
+            <input type="text" name="unit" id="unit" required></label>`);
+    }
+  
+});
+
+
+function addEventType(event) {
+    event.preventDefault();
+
+    formData = {
+        eventType: eventInput.val(),
+        label: $("#label").val(),
+        unit: $("#unit").val()
+    };
+
+    $.post("/new", formData, function (response) {
+        alert(response);
+        if (response.includes("added successfully")) {
+            $("#new-form")[0].reset();
+        }
+    });
+}
+
+$("#new-form input[type='submit']").on("click", addEventType);
+
+</script>
+
+{% endblock %}

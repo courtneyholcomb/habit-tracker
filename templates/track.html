@@ -217,7 +217,11 @@ function trackGcalHabits(event) {
     event.preventDefault();
     
     $.post("/track-gcal-habits", function (response) {
+        if (response == "") {
+            alert("No new events to track.");
+        } else {
         alert(`Events tracked:\n${response}`);
+    }
 
     });
 }
