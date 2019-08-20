@@ -1,7 +1,6 @@
 """Models for habit tracker."""
 
 from flask_sqlalchemy import SQLAlchemy
-# from server import *
 
 db = SQLAlchemy()
 
@@ -13,15 +12,15 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    email = db.Column(db.String(64), nullable=False)
-    username = db.Column(db.String(25), nullable=False)
+    email = db.Column(db.String(64), unique=True, nullable=False)
+    username = db.Column(db.String(25), unique=True, nullable=False)
     password = db.Column(db.String(64), nullable=False)
 
     habits = db.relationship("Habit", backref="user")
     influences = db.relationship("Influence", backref="user")
     symptoms = db.relationship("Symptom", backref="user")
 
-    def __repr__(self):
+    def __str__(self):
         """Show User id and username."""
 
         return f"<User {self.id} {self.username}>"
@@ -37,7 +36,7 @@ class Habit(db.Model):
     label = db.Column(db.String(30), nullable=False)
     unit = db.Column(db.String(20))
 
-    def __repr__(self):
+    def __str__(self):
         """Show Habit id and label."""
 
         return f"<Habit {self.id} {self.label} {self.user.username}>"
@@ -59,7 +58,7 @@ class HabitEvent(db.Model): # rename: habit occurrence
     user = db.relationship("User", uselist=False, backref="habit_events")
     habit = db.relationship("Habit", uselist=False, backref="habit_events")
 
-    def __repr__(self):
+    def __str__(self):
         """Show HabitEvent id, label, and associated User's username."""
 
         return f"<HabitEvent {self.id} {self.habit.label} {self.user.username}>"
@@ -75,7 +74,7 @@ class Influence(db.Model):
     label = db.Column(db.String(30), nullable=False)
     scale = db.Column(db.String(20))     # nullable
 
-    def __repr__(self):
+    def __str__(self):
         """Show Influence id, label, and associated User's username."""
 
         return f"<Influence {self.id} {self.label} {self.user.username}>"
@@ -98,7 +97,7 @@ class InfluenceEvent(db.Model):
     influence = db.relationship("Influence", uselist=False, 
                                 backref="influence_events")
 
-    def __repr__(self):
+    def __str__(self):
         """Show Influence id, label, and associated User's username."""
 
         return f"<InfluenceEvent {self.id} {self.influence.label} "\
@@ -115,7 +114,7 @@ class Symptom(db.Model):
     label = db.Column(db.String(50), nullable=False)
     scale = db.Column(db.String(20))     # nullable
 
-    def __repr__(self):
+    def __str__(self):
         """Show Symptom id, label, and associated User's username."""
 
         return f"<Symptom {self.id} {self.label} {self.user.username}>"
@@ -138,7 +137,7 @@ class SymptomEvent(db.Model):
     symptom = db.relationship("Symptom", uselist=False,
                               backref="symptom_events")
 
-    def __repr__(self):
+    def __str__(self):
         """Show Symptom id, label, and associated User's username."""
 
         return f"<SymptomEvent {self.id} {self.symptom.label} "\
@@ -159,7 +158,7 @@ class Goal(db.Model):
     user = db.relationship("User", uselist=False, backref="goals")
     habit = db.relationship("Habit", uselist=False, backref="goals")
 
-    def __repr__(self):
+    def __str__(self):
         """Show Goal id, associated Habit label, and associated username."""
 
         return f"<Goal {self.id} {self.habit.label} {self.user.username}>"
@@ -170,3 +169,4 @@ if __name__ == "__main__":
     # from server import app
     # connect_to_db(app)
     pass
+    

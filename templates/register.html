@@ -35,11 +35,11 @@ function validateRegistration(event) {
         'confpass': $("#confirm-password").val()
     };
 
-    $.post("/validate-registration", regInputs, function (response) {
-        if (response) {
+    $.post("/register", regInputs, function (response) {
+        if (response != "OK") {
             alert(response);
         } else {
-            $("#register-form").submit();
+            window.location.replace("/track");
         }
     });
 }

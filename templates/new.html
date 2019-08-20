@@ -27,39 +27,76 @@
 </form>
 <br>
 <h3>Habits Tracked:</h3>
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Unit</th>
+    </tr>
+    {% for habit in habits %}
+        <tr>
+            <td>{{ habit.label }}</td>
+            <td>{{ habit.unit }}</td>
+        </tr>
+    {% endfor %}
+</table>
 <table id="habit-list"></table>
 <br>
 <h3>Influences Tracked:</h3>
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Scale</th>
+    </tr>
+    {% for influence in influences %}
+        <tr>
+            <td>{{ influence.label }}</td>
+            <td>{{ influence.scale }}</td>
+        </tr>
+    {% endfor %}
+</table>
 <table id="influence-list"></table>
 <br>
 <h3>Symptoms Tracked:</h3>
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Scale</th>
+    </tr>
+    {% for symptom in symptoms %}
+        <tr>
+            <td>{{ symptom.label }}</td>
+            <td>{{ symptom.scale }}</td>
+        </tr>
+    {% endfor %}
+</table>
 <table id="symptom-list"></table>
 
 
 <script>
 
-function getUserInfo() {
-    $.get("/get-user-info", function (response) {
-        let habits = response.habits
-        let influences = response.influences
-        let symptoms = response.symptoms
+// !!! get list of stuff to update without refreshing?
+// function getUserInfo() {
+//     $.get("/get-user-info", function (response) {
+//         let habits = response.habits
+//         let influences = response.influences
+//         let symptoms = response.symptoms
 
-        $("#habit-list").html(`<tr><th>Title</th><th>Unit</th></tr>
-            {% for habit in habits %}
-                <tr><td>{{ habit.label }}</td><td>{{ habit.unit }}</td></tr>
-            {% endfor %}`);
-        $("#influence-list").html(`<tr><th>Title</th><th>Scale</th></tr>
-            {% for influence in influences %}
-                <tr><td>{{ influence.label }}</td><td>{{ influence.scale }}</td></tr>
-            {% endfor %}`);
-        $("#symptom-list").html(`<tr><th>Title</th><th>Scale</th></tr>
-            {% for symptom in symptoms %}
-                <tr><td>{{ symptom.label }}</td><td>{{ symptom.unit }}</td></tr>
-            {% endfor %}`);
-    });
-}
+//         $("#habit-list").html(`<tr><th>Title</th><th>Unit</th></tr>
+//             {% for habit in habits %}
+//                 <tr><td>{{ habit.label }}</td><td>{{ habit.unit }}</td></tr>
+//             {% endfor %}`);
+//         $("#influence-list").html(`<tr><th>Title</th><th>Scale</th></tr>
+//             {% for influence in influences %}
+//                 <tr><td>{{ influence.label }}</td><td>{{ influence.scale }}</td></tr>
+//             {% endfor %}`);
+//         $("#symptom-list").html(`<tr><th>Title</th><th>Scale</th></tr>
+//             {% for symptom in symptoms %}
+//                 <tr><td>{{ symptom.label }}</td><td>{{ symptom.unit }}</td></tr>
+//             {% endfor %}`);
+//     });
+// }
 
-$(window).on("load", getUserInfo);
+// $(window).on("load", getUserInfo);
 
 
 let eventInput = $("#event-type")

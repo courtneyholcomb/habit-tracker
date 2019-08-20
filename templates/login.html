@@ -29,12 +29,12 @@ function validateLogin(event) {
         'password': $("#password").val()
     };
 
-    $.post("/validate-login", loginInputs, function (response) {
-        if (response) {
+    $.post("/login", loginInputs, function (response) {
+        if (response == "Incorrect username or password.") {
             alert(response);
         } else {
-            $("#login-form").submit();
-        }
+            window.location.replace("/track");
+        } 
     });
 }
     
