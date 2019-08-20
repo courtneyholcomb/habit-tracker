@@ -4,3 +4,4 @@ __pycache__
 credentials.json
 quickstart.py
 token.pickle
+secrets.sh

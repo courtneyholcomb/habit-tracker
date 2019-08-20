@@ -10,6 +10,7 @@ import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import json
 
 from models import *
 
@@ -150,11 +151,25 @@ def show_add_new_form():
     if "user_id" in session:
         user_id = session["user_id"]
         user = User.query.get(user_id)
-        return render_template("new.html", habits=user.habits,
-                               influences=user.influences,
-                               symptoms=user.symptoms)
+        return render_template("new.html")
     else:
         redirect("/login")
+
+
+@app.route("/get-user-info")
+def get_user_info():
+    """Get list of Habits, Influences, and Symptoms for logged in User."""
+
+    user = User.query.get(session["user_id"])
+    habits = [{"id": habit.id, "label": habit.label, "unit": habit.unit}
+             for habit in user.habits]
+    influences = [{"id": influence.id, "label": influence.label, 
+                 "scale": influence.scale} for influence in user.influences]
+    symptoms = [{"id": symptom.id, "label": symptom.label,
+               "scale": symptom.scale} for symptom in user.symptoms]
+
+    return json.dumps({"habits": habits, "influences": influences,
+            "symptoms": symptoms})
 
 
 @app.route("/new", methods=["POST"])
@@ -193,7 +208,6 @@ def show_track_page():
 
     if "user_id" in session:
         user_id = session["user_id"]
-        user = User.query.get(user_id)
         return render_template("track.html", habits=user.habits,
                                influences=user.influences,
                                symptoms=user.symptoms)
@@ -244,83 +258,6 @@ def track_something():
     db.session.commit()
 
     return f"{event_type.capitalize()} tracked successfully!"
-
-
-# @app.route("/add-influence-event", methods=["POST"])
-# def track_influence():
-#     """Instantiate a new InfluenceEvent."""
-
-#     user_id = session["user_id"]
-#     intensity = request.form.get("intensity")
-
-#     influence_id = request.form.get("influence")
-#     influence = Influence.query.get(influence_id)
-
-#     # if the user entered a datetime, use that. if not, use current time.
-#     time_input = request.form.get("datetime")
-#     if time_input:
-#         timestamp = datetime.fromisoformat(time_input)
-#     else:
-#         timestamp = datetime.now()
-
-#     location = request.form.get("location")
-
-#     latitude = None
-#     longitude = None
-
-#     if location:
-#         coords = location.split(",")
-#         latitude = float(coords[0])
-#         longitude = float(coords[1])
-#         track_current_weather(latitude, longitude)
-
-#     new_influence_event = InfluenceEvent(user_id=user_id,
-#                                          influence_id=influence_id, 
-#                                          intensity=intensity,
-#                                          timestamp=timestamp, latitude=latitude,
-#                                          longitude=longitude)
-#     db.session.add(new_influence_event)
-#     db.session.commit()
-
-#     return "Influence tracked successfully!"
-
-
-# @app.route("/add-symptom-event", methods=["POST"])
-# def track_symptom():
-#     """Instantiate a new SymptomEvent."""
-
-#     user_id = session["user_id"]
-#     intensity = request.form.get("intensity")
-
-#     symptom_id = request.form.get("symptom")
-#     symptom = Symptom.query.get(symptom_id)
-
-#     # if the user entered a datetime, use that. if not, use current time.
-#     time_input = request.form.get("datetime")
-#     if time_input:
-#         timestamp = datetime.fromisoformat(time_input)
-#     else:
-#         timestamp = datetime.now()
-
-#     location = request.form.get("location")
-#     latitude = None
-#     longitude = None
-
-#     if location:
-#         coords = location.split(",")
-#         latitude = float(coords[0])
-#         longitude = float(coords[1])
-#         track_current_weather(latitude, longitude)
-
-#     new_symptom_event = SymptomEvent(user_id=user_id,
-#                                          symptom_id=symptom_id, 
-#                                          intensity=intensity,
-#                                          timestamp=timestamp, latitude=latitude,
-#                                          longitude=longitude)
-#     db.session.add(new_symptom_event)
-#     db.session.commit()
-
-#     return "Symptom tracked successfully!"
 
 
 def track_current_weather(latitude, longitude):

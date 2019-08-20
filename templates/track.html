@@ -3,10 +3,6 @@
 {% block title %}Tracking{% endblock %}
 
 {% block body %}
-<br>
-<button id="gcal-habits-button">Pull habits from GCal for past week</button>
-<br>
-
 <h3>Track Something:</h3>
 <form action="/track" method="POST" id="track-form">
     <label>
@@ -42,69 +38,8 @@
     <input type="submit" id="submut-button">
 </form>
 <br>
+<button id="gcal-habits-button">Pull habits from GCal for past week</button>
 <br>
-<br>
-
-
-
-<!-- <h3>Track an Influence:</h3>
-<form action="/add-influence-event" method="POST" id="influence-event-form">
-    <label>Influence: 
-        <select name="influence" id="influence" required>
-            {% for influence in influences %}
-                <option value={{influence.id}}>{{ influence.label }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <br>
-    <label>
-        Intensity: <input type="number" name="influence-intensity" id="influence-intensity">
-    </label>
-    <br>
-    <label>
-        Date/Time (optional): <input type="datetime-local" name="influence-datetime">
-    </label>
-    <br>
-    <label>
-        <button class="location-button" id="influence-location-button">Get My Location</button>
-        <input type="text" name="influence-location" id="influence-location">
-    </label>
-    <br>
-    <input type="submit" id="influence-submut-button">
-</form>
-<br>
-<br>
-<br>
-
-
-<h3>Track a Symptom:</h3>
-<form action="/add-symptom-event" method="POST" id="symptom-event-form">
-    <label>Symptom: 
-        <select name="symptom" id="symptom" required>
-            {% for symptom in symptoms %}
-                <option value={{symptom.id}}>{{ symptom.label }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <br>
-    <label>
-        Intensity: <input type="number" name="symptom-intensity" id="symptom-intensity">
-    </label>
-    <br>
-    <label>
-        Date/Time (optional): <input type="datetime-local" name="symptom-datetime">
-    </label>
-    <br>
-    <label>
-        <button class="location-button" id="symptom-location-button">Get My Location</button>
-        <input type="text" name="symptom-location" id="symptom-location">
-    </label>
-    <br>
-    <input type="submit" id="symptom-submut-button">
-</form>
-<br>
-<br>
-<br> -->
 
 
 
@@ -190,96 +125,21 @@ function trackEvent(event) {
 $('#track-form input[type="submit"]').on('click', trackEvent);
 
 
-// // *** INFLUENCES ***
 
-// function getInfluenceLocation(event) {
-//     event.preventDefault();
-//     navigator.geolocation.getCurrentPosition(function (position) {
-//             $("#influence-location").val(`${position.coords.latitude},${position.coords.longitude}`);
-//         });
-//     alert("Location retrieved");
-// }
+function trackGcalHabits(event) {
+    event.preventDefault();
     
-// $("#influence-location-button").on('click', getInfluenceLocation);
+    $.post("/track-gcal-habits", function (response) {
+        if (response == "") {
+            alert("No new events to track.");
+        } else {
+        alert(`Events tracked:\n${response}`);
+    }
 
+    });
+}
 
-
-// function trackInfluence(event) {
-//     event.preventDefault();
-
-//     const inputs = { 
-//         'influence': $("#influence").val(), 
-//         'intensity': $("#influence-intensity").val(),
-//         'datetime': $("#influence-datetime").val(), 
-//         'location': $("#influence-location").val()
-//     };
-
-//     $.post("/add-influence-event", inputs, function (response) {
-//         if (response == "Influence tracked successfully!") {
-//             alert(response);
-//             $("#influence-event-form")[0].reset();
-//         }
-//     });
-
-// }
-    
-// $('#influence-event-form input[type="submit"]').on('click', trackInfluence);
-
-
-
-
-
-// // *** SYMPTOMS ***
-
-// function getSymptomLocation(event) {
-//     event.preventDefault();
-//     navigator.geolocation.getCurrentPosition(function (position) {
-//             $("#symptom-location").val(`${position.coords.latitude},${position.coords.longitude}`);
-//         });
-//     alert("Location retrieved");
-// }
-    
-// $("#symptom-location-button").on('click', getSymptomLocation);
-
-
-
-// function trackSymptom(event) {
-//     event.preventDefault();
-
-//     const inputs = { 
-//         'symptom': $("#symptom").val(), 
-//         'intensity': $("#symptom-intensity").val(),
-//         'datetime': $("#symptom-datetime").val(), 
-//         'location': $("#symptom-location").val()
-//     };
-
-//     $.post("/add-symptom-event", inputs, function (response) {
-//         if (response == "Symptom tracked successfully!") {
-//             alert(response);
-//             $("#symptom-event-form")[0].reset();
-//         }
-//     });
-
-// }
-    
-// $('#symptom-event-form input[type="submit"]').on('click', trackSymptom);
-
-
-
-// function trackGcalHabits(event) {
-//     event.preventDefault();
-    
-//     $.post("/track-gcal-habits", function (response) {
-//         if (response == "") {
-//             alert("No new events to track.");
-//         } else {
-//         alert(`Events tracked:\n${response}`);
-//     }
-
-//     });
-// }
-
-// $("#gcal-habits-button").on('click', trackGcalHabits);
+$("#gcal-habits-button").on('click', trackGcalHabits);
 
 </script>
 {% endblock %}

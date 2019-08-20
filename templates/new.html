@@ -27,49 +27,40 @@
 </form>
 <br>
 <h3>Habits Tracked:</h3>
-<table>
-    <tr>
-        <th>Title</th>
-        <th>Unit</th>
-    </tr>
-    {% for habit in habits %}
-        <tr>
-            <td>{{ habit.label }}</td>
-            <td>{{ habit.unit }}</td>
-        </tr>
-    {% endfor %}
-</table>
+<table id="habit-list"></table>
 <br>
 <h3>Influences Tracked:</h3>
-<table>
-    <tr>
-        <th>Title</th>
-        <th>Scale</th>
-    </tr>
-    {% for influence in influences %}
-        <tr>
-            <td>{{ influence.label }}</td>
-            <td>{{ influence.scale }}</td>
-        </tr>
-    {% endfor %}
-</table>
+<table id="influence-list"></table>
 <br>
 <h3>Symptoms Tracked:</h3>
-<table>
-    <tr>
-        <th>Title</th>
-        <th>Scale</th>
-    </tr>
-    {% for symptom in symptoms %}
-        <tr>
-            <td>{{ symptom.label }}</td>
-            <td>{{ symptom.scale }}</td>
-        </tr>
-    {% endfor %}
-</table>
+<table id="symptom-list"></table>
 
 
 <script>
+
+function getUserInfo() {
+    $.get("/get-user-info", function (response) {
+        let habits = response.habits
+        let influences = response.influences
+        let symptoms = response.symptoms
+
+        $("#habit-list").html(`<tr><th>Title</th><th>Unit</th></tr>
+            {% for habit in habits %}
+                <tr><td>{{ habit.label }}</td><td>{{ habit.unit }}</td></tr>
+            {% endfor %}`);
+        $("#influence-list").html(`<tr><th>Title</th><th>Scale</th></tr>
+            {% for influence in influences %}
+                <tr><td>{{ influence.label }}</td><td>{{ influence.scale }}</td></tr>
+            {% endfor %}`);
+        $("#symptom-list").html(`<tr><th>Title</th><th>Scale</th></tr>
+            {% for symptom in symptoms %}
+                <tr><td>{{ symptom.label }}</td><td>{{ symptom.unit }}</td></tr>
+            {% endfor %}`);
+    });
+}
+
+$(window).on("load", getUserInfo);
+
 
 let eventInput = $("#event-type")
 
@@ -99,9 +90,10 @@ function addEventType(event) {
         alert(response);
         if (response.includes("added successfully")) {
             $("#new-form")[0].reset();
-            $("#unit-or-scale").html(`<label> Unit of measurement: 
+            $("#unit-or-scale").html(`<label>Unit of measurement: 
             <input type="text" name="unit" id="unit" required></label>`);
         }
+
     });
 }
 
