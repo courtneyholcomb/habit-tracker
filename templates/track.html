@@ -38,7 +38,17 @@
     <input type="submit" id="submut-button">
 </form>
 <br>
-<button id="gcal-habits-button">Pull habits from GCal for past week</button>
+<h4>Pull events from GCal:</h4>
+Click the button below to automatically track any events on your calendar with
+the title of your habits in the name.
+<form>
+Time frame to check:
+<br>
+<input type="date" name="start-date" id="start-date" required> to
+<input type="date" name="end-date" id="end-date" required>
+<br>
+<input type="submit" id="gcal-habits-button" value="Get Events"></button>
+</form>
 <br>
 
 
@@ -129,7 +139,12 @@ $('#track-form input[type="submit"]').on('click', trackEvent);
 function trackGcalHabits(event) {
     event.preventDefault();
     
-    $.post("/track-gcal-habits", function (response) {
+    const inputs = { 
+        startDate: $("#start-date").val(),
+        endDate: $("#start-date").val()
+    };
+
+    $.post("/track-gcal-habits", inputs, function (response) {
         if (response == "") {
             alert("No new events to track.");
         } else {

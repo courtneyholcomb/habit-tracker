@@ -303,8 +303,8 @@ def get_events():
 
     service = enable_gcal()
 
-    dt_start = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
-    dt_end = datetime.utcnow().isoformat() + 'Z'
+    dt_start = request.form.get("startDate").datetime.isoformat() + 'Z'
+    dt_end = request.form.get("endDate").datetime.isoformat() + 'Z'
 
     calendars = service.calendarList().list().execute()['items']
     events = []
