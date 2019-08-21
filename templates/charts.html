@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Tracking{% endblock %}
+
+{% block body %}
+
+<form id="chart-params" action="/line1-events.json", method="POST">
+    <label>Type: 
+        <select id="event-type">
+            <option name="event-type" id="habit" value="habit">habit</option>
+            <option name="event-type" id="influence" value="influence">influence</option>
+            <option name="event-type" id="symptom" value="symptom">symptom</option>
+        </select>
+    </label>
+    <br>
+    <label>
+        Label: <input type="text" name="habit">
+    </label>
+    <br>
+    <label>
+        Start date: <input type="date" name="start-date">
+    </label>
+    <br>
+    <label>
+        End date: <input type="date" name="end-date">
+    </label>
+    <br>
+    <input type="submit">
+</form>
+
+<div class="line-chart">
+    <canvas id="line1"></canvas>
+    <div id="line1-legend" class="chart-legend"></div>
+  </div>
+
+
+
+<script type="text/javascript">
+
+const options = {
+      responsive: true
+    };
+
+let line1_canvas = $("#line1").get(0).getContext("2d");
+
+// make this post request happen on submit of above form
+// make sure all input ids match what route is getting
+// then add time period selection and multi-habit selection
+// also add ability to choose influences or symptoms
+
+$.post("/line1-events.json", function (data) {
+    let lineChart1 = new Chart(line1_canvas, {
+                                          type: 'line',
+                                          data: { 
+                                            labels: ['Mon', 'Tues', 'Wed'],
+                                            datasets: [{
+                                                label: "habit",
+                                                data: [1, 2, 3]
+                                            }]
+                                          },
+                                          options: options
+    });
+  // $('#donutLegend').html(myDonutChart.generateLegend());
+});
+
+</script>
+{% endblock %}

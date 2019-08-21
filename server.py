@@ -124,8 +124,7 @@ def show_add_new_form():
     """Show the page where you can create a new Habit, Influence, or Symptom."""
 
     if "user_id" in session:
-        user_id = session["user_id"]
-        user = User.query.get(user_id)
+        user = User.query.get(session["user_id"])
         return render_template("new.html", habits=user.habits,
                                influences=user.influences,
                                symptoms=user.symptoms)
@@ -157,18 +156,17 @@ def add_new_event_type():
     label = request.form.get("label")
     unit = request.form.get("unit")
 
-    user_id = session["user_id"]
-    user = User.query.get(user_id)
+    user = User.query.get(session["user_id"])
 
     if event_type == "habit":
         labels = [habit.label for habit in user.habits]
-        new_event_type = Habit(label=label, unit=unit, user_id=user_id)
+        new_event_type = Habit(label=label, unit=unit, user_id=user.id)
     elif event_type == "influence":
         labels = [influence.label for influence in user.influences]
-        new_event_type = Influence(label=label, scale=unit, user_id=user_id)
+        new_event_type = Influence(label=label, scale=unit, user_id=user.id)
     elif event_type == "symptom":
         labels = [symptom.label for symptom in user.symptoms]
-        new_event_type = Symptom(label=label, scale=unit, user_id=user_id)
+        new_event_type = Symptom(label=label, scale=unit, user_id=user.id)
 
     if label not in labels:
         db.session.add(new_event_type)
@@ -184,8 +182,7 @@ def show_track_page():
     """Show the page where you can track a Habit, Influence, or Symptom."""
 
     if "user_id" in session:
-        user_id = session["user_id"]
-        user = User.query.get(user_id)
+        user = User.query.get(session["user_id"])
         return render_template("track.html", habits=user.habits,
                                influences=user.influences,
                                symptoms=user.symptoms)
@@ -343,9 +340,49 @@ def get_events():
 
     return events_tracked
 
+### view your data
+@app.route("/charts")
+def show_charts_page():
+    """Show page with User's charts."""
+
+    return render_template("charts.html")
 
 
-### later: route to view your data, route to set goals, etc.
+@app.route("/line1-events.json", methods=["POST"])
+def get_events_for_line1():
+    """Get specified events in JSON for line1 chart."""
+
+    event_type = request.args.get("event_type")
+    label = request.args.get("label")
+    time_period = request.args.get("time_period")
+    start_time = request.args.get("start_time")
+    end_time = request.args.get("end_time")
+    user = User.query.get(session["user_id"])
+
+    if event_type == "habit":
+        events = db.session.query(HabitEvent.datetime,
+                 HabitEvent.num_units).filter(HabitEvent.user_id == user.id,
+                 HabitEvent.datetime.between(start_time, end_time)).all()
+    # elif event_type == "influence":
+    #     events = user.influence_events
+    # elif event_type == "symptom"
+    #     events = user.symptom_events
+
+    units_per_time = {}
+
+    for event in events:
+        units_per_time[event.datetime.date.day] = events.get(
+            event.datetime.date.day, 0) + event.num_units
+
+    sorted_units_per_time = sorted(units_per_time)
+
+    keys = sorted_units_per_time.keys()
+    values = sorted_units_per_time.values()
+
+    return json.dumps({"keys": keys, "values": values})
+
+
+
 
 
 

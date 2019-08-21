@@ -5,6 +5,7 @@
         {% block title %} TITLE GOES HERE {% endblock %}
     </title>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.2.1/Chart.js"></script>
 </head>
 <body>
     <nav>
@@ -15,6 +16,7 @@
         <a href="/logout">Log Out</a>
         <a href="/new">Add New</a>
         <a href="/track">Track</a>
+        <a href="/charts">Charts</a>
       {% endif %}
     </nav>
     {% with messages = get_flashed_messages() %}
