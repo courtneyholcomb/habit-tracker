@@ -15,6 +15,7 @@ class User(db.Model):
     email = db.Column(db.String(64), unique=True, nullable=False)
     username = db.Column(db.String(25), unique=True, nullable=False)
     password = db.Column(db.String(64), nullable=False)
+    gcal_token = db.Column(db.PickleType)
 
     habits = db.relationship("Habit", backref="user")
     influences = db.relationship("Influence", backref="user")

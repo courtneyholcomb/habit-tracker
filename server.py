@@ -2,8 +2,9 @@
 
 import requests
 import json
-import os.path
+import os
 from datetime import datetime, timedelta
+import ipdb
 
 from flask import Flask, render_template, redirect, flash, request, session, url_for
 from flask_debugtoolbar import DebugToolbarExtension
@@ -18,7 +19,7 @@ from models import *
 
 app = Flask(__name__)
 
-app.secret_key = "lajosjfikhafbajhbdfka"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 
 def connect_to_db(app):
@@ -240,7 +241,8 @@ def track_current_weather(latitude, longitude):
     lat = latitude
     lon = longitude
 
-    response_obj = requests.get(f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&APPID=d5dffb69aad97a8a136ece32fe31a774")
+    weather_token = os.environ.get("WEATHER_TOKEN")
+    response_obj = requests.get(f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&APPID={weather_token}")
 
     weather_info = response_obj.json()
 
@@ -269,11 +271,13 @@ def track_current_weather(latitude, longitude):
 
 def enable_gcal():
     """Have user authenticate GCal, or verify they already have."""
+    
+    SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
-    creds = None
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
+    user = User.query.get(session["user_id"])
+    creds = user.gcal_token
+    print(f"creds={creds}")
+
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -282,9 +286,11 @@ def enable_gcal():
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+        # Save the credentials to db
+        # with open(user.gcal_token, 'wb') as token:
+        user.gcal_token = creds
+        # with open('token.pickle', 'wb') as token:
+        #     pickle.dump(creds, token)
 
     service = build('calendar', 'v3', credentials=creds)
 
