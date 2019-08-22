@@ -304,7 +304,11 @@ def get_events():
     service = enable_gcal()
 
     dt_start = request.form.get("startDate").datetime.isoformat() + 'Z'
+    if not dt_start:
+        dt_start = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
     dt_end = request.form.get("endDate").datetime.isoformat() + 'Z'
+    if not dt_end:
+        dt_end = datetime.utcnow().isoformat() + 'Z'
 
     calendars = service.calendarList().list().execute()['items']
     events = []
@@ -358,32 +362,24 @@ def show_charts_page():
 def get_events_for_line1():
     """Get specified events in JSON for line1 chart."""
 
-    event_type = request.args.get("event_type")
-    label = request.args.get("label")
-    time_period = request.args.get("time_period")
-    start_time = request.args.get("start_time")
-    end_time = request.args.get("end_time")
+    event_type = request.form.get("eventType")
+    label = request.form.get("label")
+    # time_period = request.args.get("timePeriod")
+    start_time = request.form.get("startTime")
+    end_time = request.form.get("endTime")
     user = User.query.get(session["user_id"])
+    ipdb.set_trace()
 
-    if event_type == "habit":
-        events = db.session.query(HabitEvent.datetime,
-                 HabitEvent.num_units).filter(HabitEvent.user_id == user.id,
-                 HabitEvent.datetime.between(start_time, end_time)).all()
-    # elif event_type == "influence":
-    #     events = user.influence_events
-    # elif event_type == "symptom"
-    #     events = user.symptom_events
+    events = db.session.query(HabitEvent).filter(HabitEvent.user_id == user.id, HabitEvent.timestamp.between(start_time, end_time)).all()
 
     units_per_time = {}
 
     for event in events:
-        units_per_time[event.datetime.date.day] = events.get(
-            event.datetime.date.day, 0) + event.num_units
+        units_per_time[event.timestamp.date.day] = events.get(
+            event.timestamp.date.day, 0) + event.num_units
 
-    sorted_units_per_time = sorted(units_per_time)
-
-    keys = sorted_units_per_time.keys()
-    values = sorted_units_per_time.values()
+    keys = sorted(units_per_time)
+    values = [events[key] for key in keys]
 
     return json.dumps({"keys": keys, "values": values})
 

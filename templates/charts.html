@@ -14,18 +14,18 @@
     </label>
     <br>
     <label>
-        Label: <input type="text" name="habit">
+        Label: <input type="text" name="label" id="label">
     </label>
     <br>
     <label>
-        Start date: <input type="date" name="start-date">
+        Start date: <input type="date" name="start-date" id="start-date">
     </label>
     <br>
     <label>
-        End date: <input type="date" name="end-date">
+        End date: <input type="date" name="end-date" id="end-date">
     </label>
     <br>
-    <input type="submit">
+    <input type="submit" id="make-chart">
 </form>
 
 <div class="line-chart">
@@ -37,31 +37,43 @@
 
 <script type="text/javascript">
 
-const options = {
-      responsive: true
+function makeChart(event) {
+    const options = {
+          responsive: true
+        };
+
+    let line1_canvas = $("#line1").get(0).getContext("2d");
+
+    let data = {
+        eventType: $("#event-type").val(),
+        label: $("#label").val(),
+        // timePeriod: $("#time_period").val(),
+        startTime: $("#start-date").val(),
+        endTime: $("#end-date").val()
     };
 
-let line1_canvas = $("#line1").get(0).getContext("2d");
+    // make this post request happen on submit of above form
+    // make sure all input ids match what route is getting
+    // then add time period selection and multi-habit selection
+    // also add ability to choose influences or symptoms
 
-// make this post request happen on submit of above form
-// make sure all input ids match what route is getting
-// then add time period selection and multi-habit selection
-// also add ability to choose influences or symptoms
-
-$.post("/line1-events.json", function (data) {
-    let lineChart1 = new Chart(line1_canvas, {
-                                          type: 'line',
-                                          data: { 
-                                            labels: ['Mon', 'Tues', 'Wed'],
-                                            datasets: [{
-                                                label: "habit",
-                                                data: [1, 2, 3]
-                                            }]
-                                          },
-                                          options: options
+    $.post("/line1-events.json", data, function (data) {
+        let lineChart1 = new Chart(line1_canvas, {
+                                              type: 'line',
+                                              data: { 
+                                                labels: ['Mon', 'Tues', 'Wed'],
+                                                datasets: [{
+                                                    label: "habit",
+                                                    data: [1, 2, 3]
+                                                }]
+                                              },
+                                              options: options
+        });
+      // $('#donutLegend').html(myDonutChart.generateLegend());
     });
-  // $('#donutLegend').html(myDonutChart.generateLegend());
-});
+}
+
+$("#make-chart").on('click', makeChart);
 
 </script>
 {% endblock %}
