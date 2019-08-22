@@ -29,13 +29,61 @@
 </form>
 
 <div class="line-chart">
-    <canvas id="line1"></canvas>
+    <canvas id="line1" width="400" height="300"></canvas>
     <div id="line1-legend" class="chart-legend"></div>
-  </div>
+</div>
 
 
 
 <script type="text/javascript">
+
+let line1_canvas = $("#line1").get(0).getContext("2d");
+
+labels = ["Mon", "Tues", "Wed"]
+
+$.get("/get-all-habits", function (response) {
+    data = $.parseJSON(response)
+    let line_chart = new Chart(line1_canvas, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: data
+        },
+
+    });
+});
+// labels = ["Mon", "Tues", "Wed", "Thurs", "Fri"]
+// data1 = [1.5, 3, 4, 2, 1]
+// data2 = [2, 3.5, 4.5, 2.5, 1.5]
+// data3 = [2.5, 3, 1, 1, 2]
+
+// let line_chart = new Chart(line1_canvas, {
+//     type: 'line',
+//     data: {
+//         labels: labels,
+//         datasets: [{
+//             label: 'yoga',
+//             data: data1,
+//             borderColor: 'pink',
+//             borderWidth: 3,
+//             fill: false
+//         }, {
+//             label: 'sleep',
+//             data: data2,
+//             borderColor: 'blue',
+//             borderWidth: 3,
+//             fill: false
+//         }, {
+//             label: 'headache',
+//             data: data3,
+//             borderColor: 'green',
+//             borderWidth: 3,
+//             fill: false
+//         },]
+//     },
+
+// })
+
 
 function makeChart(event) {
     const options = {
@@ -58,6 +106,8 @@ function makeChart(event) {
     // also add ability to choose influences or symptoms
 
     $.post("/line1-events.json", data, function (data) {
+        
+
         let lineChart1 = new Chart(line1_canvas, {
                                               type: 'line',
                                               data: { 
@@ -74,6 +124,9 @@ function makeChart(event) {
 }
 
 $("#make-chart").on('click', makeChart);
+
+    
+
 
 </script>
 {% endblock %}

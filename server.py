@@ -3,8 +3,8 @@
 import requests
 import json
 import os
-from datetime import datetime, timedelta
-import ipdb
+from datetime import datetime, timedelta, date
+# import ipdb
 
 from flask import Flask, render_template, redirect, flash, request, session, url_for
 from flask_debugtoolbar import DebugToolbarExtension
@@ -302,11 +302,15 @@ def get_events():
     """Track all past week's events with one of User's Habit labels in title."""
 
     service = enable_gcal()
+    # start = request.form.get("startDate")
+    # end = request.form.get("endDate")
+    # dt_start = datetime.strptime(start, '%Y-%m-%d').isoformat() + 'Z'
+    # dt_end = datetime.strptime(end, '%Y-%m-%d').isoformat() + 'Z'
+    dt_start = None
+    dt_end = None
 
-    dt_start = request.form.get("startDate").datetime.isoformat() + 'Z'
     if not dt_start:
         dt_start = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
-    dt_end = request.form.get("endDate").datetime.isoformat() + 'Z'
     if not dt_end:
         dt_end = datetime.utcnow().isoformat() + 'Z'
 
@@ -356,6 +360,28 @@ def show_charts_page():
     """Show page with User's charts."""
 
     return render_template("charts.html")
+
+
+@app.route("/get-all-habits")
+def get_all_habits():
+    """Get all Habits for User logged in."""
+
+    user = User.query.get(2)
+    # user = User.query.get(session["user_id"])
+    habits = user.habits
+    chart_structure = []
+
+    for habit in habits:
+        chart_structure.append({
+            "label": habit.label,
+            "data": [habit_event.num_units for habit_event in habit.habit_events],
+            "borderColor": 'blue',
+            "borderWidth": 3,
+            "fill": False
+        })
+
+    return json.dumps(chart_structure)
+
 
 
 @app.route("/line1-events.json", methods=["POST"])
