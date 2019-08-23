@@ -4,10 +4,12 @@ import requests
 import json
 import os
 from datetime import datetime, timedelta, date
+from collections import defaultdict
 # import ipdb
 
 from flask import Flask, render_template, redirect, flash, request, session, url_for
 from flask_debugtoolbar import DebugToolbarExtension
+from flask_bcrypt import Bcrypt
 
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -18,6 +20,7 @@ import pickle
 from models import *
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
@@ -56,8 +59,9 @@ def validate_login():
     password = request.form.get("password")
 
     try:
-        user = db.session.query(User).filter(User.username == username,
-                                             User.password == password).one()
+        user = db.session.query(User).filter(User.username == username).one()
+        if not bcrypt.check_password_hash(user.password, password):
+            return "Incorrect username or password."
         session["username"] = username
         session["user_id"] = user.id
         flash("Login successful")
@@ -99,7 +103,8 @@ def register():
     elif confpass != password:
         return "Passwords entered do not match."
     else:
-        new_user = User(email=email, username=username, password=password)
+        hash_pass = bcrypt.generate_password_hash(password).decode("utf-8")
+        new_user = User(email=email, username=username, password=hash_pass)
         db.session.add(new_user)
         db.session.commit()
 
@@ -366,48 +371,66 @@ def show_charts_page():
 def get_all_habits():
     """Get all Habits for User logged in."""
 
-    user = User.query.get(2)
-    # user = User.query.get(session["user_id"])
-    habits = user.habits
-    chart_structure = []
+    user = User.query.get(session["user_id"])
+    # start = request.form.get("startDate")
+    # end = request.form.get("endDate")
+    start = datetime(2019, 8, 11)
+    end = datetime(2019, 8, 21)
+    num_days = (end - start).days + 1
+
+    date_range = [(start + timedelta(days=i)) for i in range(num_days)]
+    str_date_range = [day.strftime("%m/%d/%Y") for day in date_range]
+
+    events = db.session.query(HabitEvent).filter(HabitEvent.timestamp
+        .between(start, end),HabitEvent.user == user).all()
+
+    habits = {event.habit.label for event in events}
+
+    datasets = []
 
     for habit in habits:
-        chart_structure.append({
-            "label": habit.label,
-            "data": [habit_event.num_units for habit_event in habit.habit_events],
+        # data = sum of units for given habit on given day
+        data = []
+        for day in date_range:
+            data.append(sum([event.num_units for event in events
+                         if event.timestamp.date() == day.date()
+                         and event.habit.label == habit]))
+
+        datasets.append({
+            "label": habit,
+            "data": data,
             "borderColor": 'blue',
             "borderWidth": 3,
             "fill": False
         })
-
-    return json.dumps(chart_structure)
-
+    return json.dumps({"labels": str_date_range, "datasets": datasets})
 
 
-@app.route("/line1-events.json", methods=["POST"])
-def get_events_for_line1():
-    """Get specified events in JSON for line1 chart."""
 
-    event_type = request.form.get("eventType")
-    label = request.form.get("label")
-    # time_period = request.args.get("timePeriod")
-    start_time = request.form.get("startTime")
-    end_time = request.form.get("endTime")
-    user = User.query.get(session["user_id"])
-    ipdb.set_trace()
+# @app.route("/line1-events.json", methods=["POST"])
+# def get_events_for_line1():
+#     """Get specified events in JSON for line1 chart."""
 
-    events = db.session.query(HabitEvent).filter(HabitEvent.user_id == user.id, HabitEvent.timestamp.between(start_time, end_time)).all()
+#     event_type = request.form.get("eventType")
+#     label = request.form.get("label")
+#     # time_period = request.args.get("timePeriod")
+#     start_time = request.form.get("startTime")
+#     end_time = request.form.get("endTime")
+#     user = User.query.get(session["user_id"])
+#     ipdb.set_trace()
 
-    units_per_time = {}
+#     events = db.session.query(HabitEvent).filter(HabitEvent.user_id == user.id, HabitEvent.timestamp.between(start_time, end_time)).all()
 
-    for event in events:
-        units_per_time[event.timestamp.date.day] = events.get(
-            event.timestamp.date.day, 0) + event.num_units
+#     units_per_time = {}
 
-    keys = sorted(units_per_time)
-    values = [events[key] for key in keys]
+#     for event in events:
+#         units_per_time[event.timestamp.date.day] = events.get(
+#             event.timestamp.date.day, 0) + event.num_units
 
-    return json.dumps({"keys": keys, "values": values})
+#     keys = sorted(units_per_time)
+#     values = [events[key] for key in keys]
+
+#     return json.dumps({"keys": keys, "values": values})
 
 
 

@@ -39,19 +39,27 @@
 
 let line1_canvas = $("#line1").get(0).getContext("2d");
 
-labels = ["Mon", "Tues", "Wed"]
+window.onload = function () {
+    $.get("/get-all-habits", function (response) {
+        let data = $.parseJSON(response);
+        let labels = data.labels;
+        let datasets = data.datasets;
+        debugger;
 
-$.get("/get-all-habits", function (response) {
-    data = $.parseJSON(response)
-    let line_chart = new Chart(line1_canvas, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: data
-        },
+        // console.log("data****", data);
+        // console.log("labels****", labels);
+        // console.log("datasets****", datasets);
 
+        let line_chart = new Chart(line1_canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+
+        });
     });
-});
+}
 // labels = ["Mon", "Tues", "Wed", "Thurs", "Fri"]
 // data1 = [1.5, 3, 4, 2, 1]
 // data2 = [2, 3.5, 4.5, 2.5, 1.5]
@@ -85,45 +93,45 @@ $.get("/get-all-habits", function (response) {
 // })
 
 
-function makeChart(event) {
-    const options = {
-          responsive: true
-        };
+// function makeChart(event) {
+//     const options = {
+//           responsive: true
+//         };
 
-    let line1_canvas = $("#line1").get(0).getContext("2d");
+//     let line1_canvas = $("#line1").get(0).getContext("2d");
 
-    let data = {
-        eventType: $("#event-type").val(),
-        label: $("#label").val(),
-        // timePeriod: $("#time_period").val(),
-        startTime: $("#start-date").val(),
-        endTime: $("#end-date").val()
-    };
+//     let data = {
+//         eventType: $("#event-type").val(),
+//         label: $("#label").val(),
+//         // timePeriod: $("#time_period").val(),
+//         startTime: $("#start-date").val(),
+//         endTime: $("#end-date").val()
+//     };
 
-    // make this post request happen on submit of above form
-    // make sure all input ids match what route is getting
-    // then add time period selection and multi-habit selection
-    // also add ability to choose influences or symptoms
+//     // make this post request happen on submit of above form
+//     // make sure all input ids match what route is getting
+//     // then add time period selection and multi-habit selection
+//     // also add ability to choose influences or symptoms
 
-    $.post("/line1-events.json", data, function (data) {
+//     $.post("/line1-events.json", data, function (data) {
         
 
-        let lineChart1 = new Chart(line1_canvas, {
-                                              type: 'line',
-                                              data: { 
-                                                labels: ['Mon', 'Tues', 'Wed'],
-                                                datasets: [{
-                                                    label: "habit",
-                                                    data: [1, 2, 3]
-                                                }]
-                                              },
-                                              options: options
-        });
-      // $('#donutLegend').html(myDonutChart.generateLegend());
-    });
-}
+//         let lineChart1 = new Chart(line1_canvas, {
+//                                               type: 'line',
+//                                               data: { 
+//                                                 labels: ['Mon', 'Tues', 'Wed'],
+//                                                 datasets: [{
+//                                                     label: "habit",
+//                                                     data: [1, 2, 3]
+//                                                 }]
+//                                               },
+//                                               options: options
+//         });
+//       // $('#donutLegend').html(myDonutChart.generateLegend());
+//     });
+// }
 
-$("#make-chart").on('click', makeChart);
+// $("#make-chart").on('click', makeChart);
 
     
 
