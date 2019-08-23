@@ -383,16 +383,22 @@ def show_charts_page():
     return render_template("charts.html")
 
 
-@app.route("/get-all-habits")
-def get_all_habits():
-    """Get all Habits for User logged in."""
+@app.route("/line1-data", methods=["POST"])
+def get_line1_data():
+    """Get data needed for chart with id = line1."""
 
-    # user = User.query.get(session["user_id"])
-    user = User.query.get(1)
-    # start = request.form.get("startDate")
-    # end = request.form.get("endDate")
-    start = datetime(2019, 8, 11)
-    end = datetime(2019, 8, 31)
+    user = User.query.get(session["user_id"])
+    start_input = request.form.get("startDate")
+    end_input = request.form.get("endDate")
+
+    # pdb.set_trace()
+    if start_input and end_input:
+        start = datetime.strptime(start_input, "%Y-%m-%d").date()
+        end = datetime.strptime(end_input, "%Y-%m-%d").date()
+    else:
+        start = datetime.now().date() - timedelta(days=7)
+        end = datetime.now().date()
+    
     num_days = (end - start).days + 1
 
     date_range = [(start + timedelta(days=i)) for i in range(num_days)]
@@ -402,15 +408,15 @@ def get_all_habits():
     habit_events = db.session.query(HabitEvent).filter(HabitEvent.timestamp
         .between(start, end), HabitEvent.user == user).all()
 
-    habit_event_info = [(habit_event.habit, habit_event, habit_event.num_units,
-                         "habit") for habit_event in habit_events]
+    habit_event_info = [(habit_event.habit, habit_event, habit_event.num_units)
+                         for habit_event in habit_events]
 
     influence_events = db.session.query(InfluenceEvent).filter(
         InfluenceEvent.timestamp.between(start, end),
         InfluenceEvent.user == user).all()
 
     influence_event_info = [(influence_event.influence, influence_event,
-                             influence_event.intensity, "influence")
+                             influence_event.intensity)
                             for influence_event in influence_events
                             if influence_event.influence.label != "weather"]
 
@@ -419,7 +425,7 @@ def get_all_habits():
         SymptomEvent.user == user).all()
 
     symptom_event_info = [(symptom_event.symptom, symptom_event,
-                           symptom_event.intensity, "symptom")
+                           symptom_event.intensity)
                           for symptom_event in symptom_events]
 
     events = habit_events + influence_events + symptom_events
@@ -444,7 +450,7 @@ def get_all_habits():
         day_units = []
         for day in date_range:
             unit_list = [info[2] for info in event_infos
-                         if info[1].timestamp.date() == day.date()
+                         if info[1].timestamp.date() == day
                          and info[0].label == event_label]
             day_units.append(sum(unit_list))
 
