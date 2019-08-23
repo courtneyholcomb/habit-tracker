@@ -387,8 +387,10 @@ def get_all_habits():
     habits = {event.habit.label for event in events}
 
     datasets = []
+    colors = ['#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236', 
+                  '#166a8f', '#00a950', '#58595b', '#8549ba']
 
-    for habit in habits:
+    for i, habit in enumerate(habits):
         # data = sum of units for given habit on given day
         data = []
         for day in date_range:
@@ -399,7 +401,7 @@ def get_all_habits():
         datasets.append({
             "label": habit,
             "data": data,
-            "borderColor": 'blue',
+            "borderColor": colors[i % len(colors)],
             "borderWidth": 3,
             "fill": False
         })
