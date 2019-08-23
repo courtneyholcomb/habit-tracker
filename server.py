@@ -6,6 +6,7 @@ import os
 from datetime import datetime, timedelta, date
 from collections import defaultdict
 # import ipdb
+import pdb
 
 from flask import Flask, render_template, redirect, flash, request, session, url_for
 from flask_debugtoolbar import DebugToolbarExtension
@@ -250,6 +251,7 @@ def track_current_weather(latitude, longitude):
     response_obj = requests.get(f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&APPID={weather_token}")
 
     weather_info = response_obj.json()
+    weather_id = weather_info['weather'][0]['id']
 
     temp_info = weather_info['main']
     current_temp_f = 9 / 5 * (temp_info['temp'] - 273) + 32
@@ -257,14 +259,28 @@ def track_current_weather(latitude, longitude):
     user_id = session["user_id"]
     timestamp = datetime.now()
     
+    # if user doesn't track temp & weather yet, add them
+    try:
+        temp_infl = Influence.query.filter_by(label="temperature").one()
+    except:
+        new_infl = Influence(label="temperature", scale=125, user_id=user_id)
+        db.session.add(new_infl)
+        db.session.commit()
+        temp_infl = Influence.query.filter_by(label="temperature").one()
 
-    temp_infl = Influence.query.filter_by(label="temperature").one()
+    try:
+        weather_infl = Influence.query.filter_by(label='weather').one()
+    except:
+        new_infl = Influence(label="weather", scale=1000, user_id=user_id)
+        db.session.add(new_infl)
+        db.session.commit()
+        weather_infl = Influence.query.filter_by(label='weather').one()
+
+    # instantiate temp & weather events
     temp_event = InfluenceEvent(user_id=user_id, influence_id=temp_infl.id,
                                 intensity=current_temp_f, timestamp=timestamp,
                                 latitude=lat, longitude=lon)
 
-    weather_id = weather_info['weather'][0]['id']
-    weather_infl = Influence.query.filter_by(label='weather').one()
     weather_event = InfluenceEvent(user_id=user_id, influence_id=weather_infl.id,
                                    intensity=weather_id, timestamp=timestamp,
                                    latitude=lat, longitude=lon)
@@ -371,37 +387,71 @@ def show_charts_page():
 def get_all_habits():
     """Get all Habits for User logged in."""
 
-    user = User.query.get(session["user_id"])
+    # user = User.query.get(session["user_id"])
+    user = User.query.get(1)
     # start = request.form.get("startDate")
     # end = request.form.get("endDate")
     start = datetime(2019, 8, 11)
-    end = datetime(2019, 8, 21)
+    end = datetime(2019, 8, 31)
     num_days = (end - start).days + 1
 
     date_range = [(start + timedelta(days=i)) for i in range(num_days)]
     str_date_range = [day.strftime("%m/%d/%Y") for day in date_range]
 
-    events = db.session.query(HabitEvent).filter(HabitEvent.timestamp
-        .between(start, end),HabitEvent.user == user).all()
+    # get info for all events that took place during selected time period
+    habit_events = db.session.query(HabitEvent).filter(HabitEvent.timestamp
+        .between(start, end), HabitEvent.user == user).all()
 
-    habits = {event.habit.label for event in events}
+    habit_event_info = [(habit_event.habit, habit_event, habit_event.num_units,
+                         "habit") for habit_event in habit_events]
 
-    datasets = []
-    colors = ['#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236', 
+    influence_events = db.session.query(InfluenceEvent).filter(
+        InfluenceEvent.timestamp.between(start, end),
+        InfluenceEvent.user == user).all()
+
+    influence_event_info = [(influence_event.influence, influence_event,
+                             influence_event.intensity, "influence")
+                            for influence_event in influence_events
+                            if influence_event.influence.label != "weather"]
+
+    symptom_events = db.session.query(SymptomEvent).filter(
+        SymptomEvent.timestamp.between(start, end),
+        SymptomEvent.user == user).all()
+
+    symptom_event_info = [(symptom_event.symptom, symptom_event,
+                           symptom_event.intensity, "symptom")
+                          for symptom_event in symptom_events]
+
+    events = habit_events + influence_events + symptom_events
+    event_infos = habit_event_info + influence_event_info + symptom_event_info
+    event_labels = list(set(info[0].label for info in event_infos))
+    # pdb.set_trace()
+
+    # get labels for all events in time period
+    # habit_labels = [event.habit.label for event in habit_events]
+    # influence_labels = [event.influence.label for event in influence_events]
+    # symptom_labels = [event.symptom.label for event in symptom_events]
+
+    # event_labels = habit_labels + influence_labels + symptom_labels
+
+    graph_colors = ['#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236', 
                   '#166a8f', '#00a950', '#58595b', '#8549ba']
 
-    for i, habit in enumerate(habits):
-        # data = sum of units for given habit on given day
-        data = []
+    datasets = []
+
+    for i, event_label in enumerate(event_labels):
+        # day_units = sum of units for given event type on given day
+        day_units = []
         for day in date_range:
-            data.append(sum([event.num_units for event in events
-                         if event.timestamp.date() == day.date()
-                         and event.habit.label == habit]))
+            unit_list = [info[2] for info in event_infos
+                         if info[1].timestamp.date() == day.date()
+                         and info[0].label == event_label]
+            day_units.append(sum(unit_list))
 
         datasets.append({
-            "label": habit,
-            "data": data,
-            "borderColor": colors[i % len(colors)],
+            "label": event_label,
+            "data": day_units,
+            "borderColor": graph_colors[i % len(graph_colors)],
             "borderWidth": 3,
             "fill": False
         })
