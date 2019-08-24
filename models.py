@@ -163,11 +163,3 @@ class Goal(db.Model):
         """Show Goal id, associated Habit label, and associated username."""
 
         return f"<Goal {self.id} {self.habit.label} {self.user.username}>"
-
-
-if __name__ == "__main__":
-    # Connect to habit-tracker database when testing models interactively.
-    # from server import app
-    # connect_to_db(app)
-    pass
-    

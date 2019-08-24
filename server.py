@@ -5,7 +5,7 @@ import json
 import os
 from datetime import datetime, timedelta, date
 from collections import defaultdict
-# import ipdb
+import pickle
 import pdb
 
 from flask import Flask, render_template, redirect, flash, request, session, url_for
@@ -15,10 +15,9 @@ from flask_bcrypt import Bcrypt
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-import pickle
 
+from models import db, User, Habit, HabitEvent, Influence, InfluenceEvent, Symptom, SymptomEvent
 
-from models import *
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -344,7 +343,7 @@ def get_events():
                                         singleEvents=True,
                                         orderBy='startTime').execute()
         events += events_result["items"]
-
+    pdb.set_trace()
     user = User.query.get(session["user_id"])
     habits = user.habits
 
