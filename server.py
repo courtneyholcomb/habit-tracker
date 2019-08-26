@@ -322,12 +322,9 @@ def get_events():
     """Track all past week's events with one of User's Habit labels in title."""
 
     service = enable_gcal()
-    # start = request.form.get("startDate")
-    # end = request.form.get("endDate")
-    # dt_start = datetime.strptime(start, '%Y-%m-%d').isoformat() + 'Z'
-    # dt_end = datetime.strptime(end, '%Y-%m-%d').isoformat() + 'Z'
-    dt_start = None
-    dt_end = None
+
+    dt_start = request.form.get("startDate")
+    dt_end = request.form.get("endDate")
 
     if not dt_start:
         dt_start = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
@@ -343,7 +340,7 @@ def get_events():
                                         singleEvents=True,
                                         orderBy='startTime').execute()
         events += events_result["items"]
-    pdb.set_trace()
+    
     user = User.query.get(session["user_id"])
     habits = user.habits
 
@@ -460,34 +457,46 @@ def get_line1_data():
             "borderWidth": 3,
             "fill": False
         })
+
     return json.dumps({"labels": str_date_range, "datasets": datasets})
 
 
 
-# @app.route("/line1-events.json", methods=["POST"])
-# def get_events_for_line1():
-#     """Get specified events in JSON for line1 chart."""
+@app.route("/bubble-chart-data")
+def get_bubble_chart_data():
+    """Get User's tracked data in JSON format for bubble chart."""
 
-#     event_type = request.form.get("eventType")
-#     label = request.form.get("label")
-#     # time_period = request.args.get("timePeriod")
-#     start_time = request.form.get("startTime")
-#     end_time = request.form.get("endTime")
-#     user = User.query.get(session["user_id"])
-#     ipdb.set_trace()
+    user = User.query.get(session["user_id"])
 
-#     events = db.session.query(HabitEvent).filter(HabitEvent.user_id == user.id, HabitEvent.timestamp.between(start_time, end_time)).all()
+    event_types = []
 
-#     units_per_time = {}
+    for habit in user.habits:
+        total_units = 0
+        for habit_event in habit.habit_events:
+            total_units += habit_event.num_units
+        event_types.append({"type": "habit", "id": habit.id, "label": habit.label,
+                        "units": total_units, "fill": "#f53794"})
 
-#     for event in events:
-#         units_per_time[event.timestamp.date.day] = events.get(
-#             event.timestamp.date.day, 0) + event.num_units
+    for influence in user.influences:
+        total_units = 0
+        for influence_event in influence.influence_events:
+            total_units += influence_event.intensity
+        event_types.append({"type": "influence", "id": influence.id,
+                        "label": influence.label, "units": total_units,
+                        "fill": "#f67019"})
 
-#     keys = sorted(units_per_time)
-#     values = [events[key] for key in keys]
+    for symptom in user.symptoms:
+        total_units = 0
+        for symptom_event in symptom.symptom_events:
+            total_units += symptom_event.intensity
+        event_types.append({"type": "symptom", "id": symptom.id,
+                        "label": symptom.label, "units": total_units,
+                        "fill": "#4dc9f6"})
 
-#     return json.dumps({"keys": keys, "values": values})
+    pdb.set_trace()
+
+    return json.dumps(event_types)
+
 
 
 

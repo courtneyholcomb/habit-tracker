@@ -20,13 +20,7 @@
     <canvas id="line1" width="400" height="300"></canvas>
     <div id="line1-legend" class="chart-legend"></div>
 </div>
-
-<div id="bubble-chart">
-    <svg width="600" height="400">
-        <circle></circle>
-        <circle></circle>
-    </svg>
-</div>
+<div id="bubble-chart"></div>
 
 
 
@@ -80,77 +74,91 @@ $("#update-chart").on('click', function (event) {
 
 
 
-var bubbleChart = function () {
-    var width = 600,
-        height = 400;
+// var bubbleChart = function () {
+//     var width = 600,
+//         height = 400;
 
-    function chart(selection){        
-    // you gonna get here
+//     function chart(selection){        
+//     // you gonna get here
+//     }
+
+//     chart.width = function(value) {
+//         if (!arguments.length) {
+//             return width;
+//         }
+
+//         width = value;
+//         return chart;
+//     }
+
+//     chart.height = function(value) {
+//         if (!arguments.length) {
+//             return height;
+//         }
+//             height = value;
+//             return chart;
+//     }
+
+//     return chart;
+// }
+
+// d
+
+// var chart = bubbleChart().width(300).height(200);
+(function () {
+
+    var width = 500,
+        height = 500;
+
+    var svg = d3.select("#bubble-chart")
+        .append("svg")
+        .attr("class", "chart")
+        .attr("height", height)
+        .attr("width", width)
+        .append("g")
+        .attr("transform", "translate(0,0)")
+
+    d3.queue()
+        .defer(d3.json, "/bubble-chart-data")
+        .await(ready)
+
+    function ready (error, datapoints) {
+        
+        var circles = svg.selectAll("circle")
+            .data([1,2,3,4,5])
+            .enter()
+            .append("circle")
+            .attr("r", 10)
+            .attr("fill", "pink")
     }
 
-    chart.width = function(value) {
-        if (!arguments.length) {
-            return width;
-        }
+})();
+// var chartData = d3.json(, function (d) {
+//     return d;
+// });
 
-        width = value;
-        return chart;
-    }
+// var circles = d3.select("#bubble-chart").selectAll("circle");
 
-    chart.height = function(value) {
-        if (!arguments.length) {
-            return height;
-        }
-            height = value;
-            return chart;
-    }
-
-    return chart;
-}
-
-
-
-var chart = bubbleChart().width(300).height(200);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// circles.data(chartData)
+//     .enter()
+//   .append("circle")
+//   .attr("r", function (d) {
+//       return d.units;
+//     });
 
 
 
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
 {% endblock %}
