@@ -478,12 +478,13 @@ def get_bubble_chart_data():
                         "units": total_units, "fill": "#f53794"})
 
     for influence in user.influences:
-        total_units = 0
-        for influence_event in influence.influence_events:
-            total_units += influence_event.intensity
-        event_types.append({"type": "influence", "id": influence.id,
-                        "label": influence.label, "units": total_units,
-                        "fill": "#f67019"})
+        if influence.label != "weather" and influence.label != "temperature":
+            total_units = 0
+            for influence_event in influence.influence_events:
+                total_units += influence_event.intensity
+            event_types.append({"type": "influence", "id": influence.id,
+                            "label": influence.label, "units": total_units,
+                            "fill": "#f67019"})
 
     for symptom in user.symptoms:
         total_units = 0
@@ -492,8 +493,6 @@ def get_bubble_chart_data():
         event_types.append({"type": "symptom", "id": symptom.id,
                         "label": symptom.label, "units": total_units,
                         "fill": "#4dc9f6"})
-
-    pdb.set_trace()
 
     return json.dumps(event_types)
 
