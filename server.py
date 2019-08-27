@@ -475,7 +475,7 @@ def get_bubble_chart_data():
         for habit_event in habit.habit_events:
             total_units += habit_event.num_units
         event_types.append({"type": "habit", "id": habit.id, "label": habit.label,
-                        "units": total_units, "fill": "#f53794"})
+                        "units": total_units, "fill": "#f53794", "group": 0})
 
     for influence in user.influences:
         if influence.label != "weather" and influence.label != "temperature":
@@ -484,7 +484,7 @@ def get_bubble_chart_data():
                 total_units += influence_event.intensity
             event_types.append({"type": "influence", "id": influence.id,
                             "label": influence.label, "units": total_units,
-                            "fill": "#f67019"})
+                            "fill": "#f67019", "group": 1})
 
     for symptom in user.symptoms:
         total_units = 0
@@ -492,7 +492,7 @@ def get_bubble_chart_data():
             total_units += symptom_event.intensity
         event_types.append({"type": "symptom", "id": symptom.id,
                         "label": symptom.label, "units": total_units,
-                        "fill": "#4dc9f6"})
+                        "fill": "#4dc9f6", "group": 2})
 
     return json.dumps(event_types)
 

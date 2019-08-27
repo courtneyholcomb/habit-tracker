@@ -20,8 +20,9 @@
     <canvas id="line1" width="400" height="300"></canvas>
     <div id="line1-legend" class="chart-legend"></div>
 </div>
+<button id="group">Group</button>
+<button id="ungroup">Ungroup</button>
 <div id="bubble-chart"></div>
-
 
 
 <script type="text/javascript">
@@ -107,7 +108,7 @@ $("#update-chart").on('click', function (event) {
 // var chart = bubbleChart().width(300).height(200);
 (function () {
 
-    var width = 500,
+    var width = 900,
         height = 500;
 
     var svg = d3.select("#bubble-chart")
@@ -119,13 +120,11 @@ $("#update-chart").on('click', function (event) {
         .attr("transform", "translate(0,0)")
 
     
-
     d3.queue()
         .defer(d3.json, "/bubble-chart-data")
         .await(ready)
 
     
-
     function ready (error, datapoints) {
         
         let minData = d3.min(datapoints, (d) => d.units );
@@ -133,38 +132,62 @@ $("#update-chart").on('click', function (event) {
         let sizeScale = d3.scaleLinear()
                   .domain([minData, maxData])
                   .range([50, 100]);
+        var clusters = [{radius: 1}, {radius: 2}, {radius: 3}]
 
         var simulation = d3.forceSimulation()
             .force("x", d3.forceX(width / 2).strength(0.05))
             .force("y", d3.forceY(height / 2).strength(0.05))
             .force("collide", d3.forceCollide(function (d) {
                 return sizeScale(d.units) + 2;
-            }));
+            }))
+            .force('cluster', d3.forceCluster());
 
-        var circles = svg.selectAll("circle")
+        simulation.nodes(datapoints)
+            .on("tick", moveCircles);
+
+        var groups = svg.selectAll("g")
             .data(datapoints)
             .enter()
-            .append("circle")
+            .append("g");
+
+        var circles = groups.append("circle")
             .attr("r", (d) => sizeScale(d.units))
             .attr("fill", function (d) {
                 return d.fill;
             });
-        
-        simulation.nodes(datapoints)
-            .on("tick", moveCircles)
+
+        var labels = groups.append("text")
+            .text((d) => d.label)
+            .attr("text-anchor", "middle");
 
         function moveCircles () {
-            circles
-                .attr("cx", function (d) {
-                    return d.x;
-                })
-                .attr("cy", function (d) {
-                    return d.y
+            groups
+                .attr("transform", function (d) {
+                    return `translate(${d.x},${d.y})`;
                 });
+            }
+
+        function forceCluster(alpha) {
+            for (var i = 0; i < datapoints.length; i++) {
+
+                datapoint = datapoints[i];
+
+                // k smooths movement
+                let k = alpha * 1;
+
+                var cluster = clusters[datapoint.group];
+
+                datapoint.vx -= (datapoint.x - cluster.x) * k;
+                datapoint.vy -= (datapoint.y - cluster.y) * k;
+          }
         }
     }
 
 })();
+
+d3.select("#group").on("click", function () {
+    console.log("yep");
+});
 // var chartData = d3.json(, function (d) {
 //     return d;
 // });
