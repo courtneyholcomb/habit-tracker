@@ -20,7 +20,7 @@
     <canvas id="line1" width="400" height="300"></canvas>
     <div id="line1-legend" class="chart-legend"></div>
 </div>
-<button id="group">Group</button>
+<button id="group">Group by type</button>
 <button id="ungroup">Ungroup</button>
 <div id="bubble-chart"></div>
 
@@ -149,14 +149,20 @@ $("#update-chart").on('click', function (event) {
         var groups = svg.selectAll("g")
             .data(datapoints)
             .enter()
-            .append("g");
+            .append("g")
+            .attr("class", "circle-group")
+            .attr("assoc", function (d) {
+                return d.associations;
+            });
+            // .attr("group", function (d) {
+            //     return d.group;
+            // })
 
         var circles = groups.append("circle")
             .attr("r", (d) => sizeScale(d.units))
             .attr("fill", function (d) {
                 return d.fill;
-            })
-            .attr("class", "circle");
+            });
 
         var labels = groups.append("text")
             .text((d) => d.label)
@@ -177,6 +183,15 @@ $("#update-chart").on('click', function (event) {
                 return width * 2/3;
             }
         });
+
+        // var splitForceY = d3.forceY(function(d) {
+
+        //     if (d.group === 0) {
+        //         return height * 1/3;
+        //     } else if (d.group === 2) {
+        //         return height * 2/3;
+        //     }
+        // });
 
         var splitForceY = d3.forceY(function(d) {
 
@@ -210,12 +225,28 @@ $("#update-chart").on('click', function (event) {
                 .restart();
         });
 
-        d3.selectAll("#bubble-chart g").on("click", function (d) {
-            if (d.label in d3.select(this).data.associations) {
-                d.group = 0;             
-            } else {
-                d.group = 2;
-            }
+        d3.selectAll("#bubble-chart .circle-group").on("click", function (d) {
+            
+            clickedCircle = d3.select(this);
+            associations = clickedCircle.attr("assoc");
+
+            console.log(associations);
+
+            groups.datum(function(d) {
+                if (associations.includes(d.label)) {
+                    d.group = 0;           
+                } else {
+                    d.group = 2;
+                }
+
+                return d;
+            });
+
+            clickedCircle.datum(function (d) {
+                d.group = 0;
+                return d;
+            });
+            
 
             groupCircles();
         });
