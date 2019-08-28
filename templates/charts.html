@@ -109,7 +109,7 @@ $("#update-chart").on('click', function (event) {
 (function () {
 
     var width = 800,
-        height = 500;
+        height = 800;
 
     var svg = d3.select("#bubble-chart")
         .append("svg")
@@ -132,10 +132,9 @@ $("#update-chart").on('click', function (event) {
         let sizeScale = d3.scaleLinear()
                   .domain([minData, maxData])
                   .range([50, 100]);
-        var clusters = [{radius: 1}, {radius: 2}, {radius: 3}]
 
         var collideForce = d3.forceCollide(function(d) {
-            return sizeScale(d.units) + 2;
+            return sizeScale(d.units) + 3;
         });
 
         var simulation = d3.forceSimulation()
@@ -169,19 +168,39 @@ $("#update-chart").on('click', function (event) {
                 });
             }
 
-        var xForce = d3.forceX(function(d) {
+        var splitForceX = d3.forceX(function(d) {
 
             if (d.group === 0) {
                 return width * 1/3;
             } else if (d.group === 2) {
                 return width * 2/3;
             }
+        });
 
-          }).strength(0.08);
+        var splitForceY = d3.forceY(function(d) {
+
+            if (d.group === 0) {
+                return height * 1/3;
+            } else if (d.group === 2) {
+                return height * 2/3;
+            }
+        });
+
+        var combineForceX = d3.forceX(width / 2).strength(0.08);
+        var combineForceY = d3.forceY(height / 2).strength(0.08);
 
         d3.select("#group").on("click", function () {
             simulation.nodes(datapoints)
-                .force("x", xForce)
+                .force("x", splitForceX)
+                .force("y", splitForceY)
+                .alphaTarget(0.5)
+                .restart();
+        });
+
+        d3.select("#ungroup").on("click", function () {
+            simulation.nodes(datapoints)
+                .force("x", combineForceX)
+                .force("y", combineForceY)
                 .alphaTarget(0.5)
                 .restart();
         }); 

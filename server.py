@@ -387,7 +387,6 @@ def get_line1_data():
     start_input = request.form.get("startDate")
     end_input = request.form.get("endDate")
 
-    # pdb.set_trace()
     if start_input and end_input:
         start = datetime.strptime(start_input, "%Y-%m-%d").date()
         end = datetime.strptime(end_input, "%Y-%m-%d").date()
@@ -427,14 +426,6 @@ def get_line1_data():
     events = habit_events + influence_events + symptom_events
     event_infos = habit_event_info + influence_event_info + symptom_event_info
     event_labels = list(set(info[0].label for info in event_infos))
-    # pdb.set_trace()
-
-    # get labels for all events in time period
-    # habit_labels = [event.habit.label for event in habit_events]
-    # influence_labels = [event.influence.label for event in influence_events]
-    # symptom_labels = [event.symptom.label for event in symptom_events]
-
-    # event_labels = habit_labels + influence_labels + symptom_labels
 
     graph_colors = ['#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236', 
                   '#166a8f', '#00a950', '#58595b', '#8549ba']
@@ -472,27 +463,76 @@ def get_bubble_chart_data():
 
     for habit in user.habits:
         total_units = 0
+        evt_dates = {}
         for habit_event in habit.habit_events:
             total_units += habit_event.num_units
+            evt_date = habit_event.timestamp.date()
+            evt_dates[evt_date] = evt_dates.get(evt_date, 0) + habit_event.num_units
+
+        # find all events associated with these dates
+        all_habit_evts = db.session.query(HabitEvent).filter(HabitEvent.user == user,
+                         HabitEvent.habit != habit).all()
+        all_infl_evts = db.session.query(InfluenceEvent).filter(InfluenceEvent.user == user).all()
+        all_symp_evts = db.session.query(SymptomEvent).filter(SymptomEvent.user == user).all()
+
+        assoc_habits = [habit_evt.habit.label for habit_evt in all_habit_evts
+                        if habit_evt.timestamp.date() in evt_dates]
+        assoc_infls = [infl_evt.influence.label for infl_evt in all_infl_evts
+                        if infl_evt.timestamp.date() in evt_dates]
+        assoc_symps = [symp_evt.symptom.label for symp_evt in all_symp_evts
+                        if symp_evt.timestamp.date() in evt_dates]
+        associations = list(set(assoc_habits + assoc_infls + assoc_symps))
+
         event_types.append({"type": "habit", "id": habit.id, "label": habit.label,
-                        "units": total_units, "fill": "#f53794", "group": 0})
+                        "units": total_units, "fill": "#f53794", "group": 0,
+                        "associations": associations})
 
     for influence in user.influences:
         if influence.label != "weather" and influence.label != "temperature":
             total_units = 0
             for influence_event in influence.influence_events:
                 total_units += influence_event.intensity
+
+            all_habit_evts = db.session.query(HabitEvent).filter(HabitEvent.user == user).all()
+            all_infl_evts = db.session.query(InfluenceEvent).filter(InfluenceEvent.user == user,
+                            InfluenceEvent.influence != influence).all()
+            all_symp_evts = db.session.query(SymptomEvent).filter(SymptomEvent.user == user).all()
+
+            assoc_habits = [habit_evt.habit.label for habit_evt in all_habit_evts
+                            if habit_evt.timestamp.date() in evt_dates]
+            assoc_infls = [infl_evt.influence.label for infl_evt in all_infl_evts
+                            if infl_evt.timestamp.date() in evt_dates]
+            assoc_symps = [symp_evt.symptom.label for symp_evt in all_symp_evts
+                            if symp_evt.timestamp.date() in evt_dates]
+            associations = list(set(assoc_habits + assoc_infls + assoc_symps))
+
             event_types.append({"type": "influence", "id": influence.id,
                             "label": influence.label, "units": total_units,
-                            "fill": "#f67019", "group": 1})
+                            "fill": "#f67019", "group": 1,
+                            "associations": associations})
 
     for symptom in user.symptoms:
         total_units = 0
         for symptom_event in symptom.symptom_events:
             total_units += symptom_event.intensity
+
+        all_habit_evts = db.session.query(HabitEvent).filter(HabitEvent.user == user).all()
+        all_infl_evts = db.session.query(InfluenceEvent).filter(InfluenceEvent.user == user).all()
+        all_symp_evts = db.session.query(SymptomEvent).filter(SymptomEvent.user == user,
+                        SymptomEvent.symptom != symptom).all()
+
+        assoc_habits = [habit_evt.habit.label for habit_evt in all_habit_evts
+                        if habit_evt.timestamp.date() in evt_dates]
+        assoc_infls = [infl_evt.influence.label for infl_evt in all_infl_evts
+                        if infl_evt.timestamp.date() in evt_dates]
+        assoc_symps = [symp_evt.symptom.label for symp_evt in all_symp_evts
+                        if symp_evt.timestamp.date() in evt_dates]
+        associations = list(set(assoc_habits + assoc_infls + assoc_symps))
+
         event_types.append({"type": "symptom", "id": symptom.id,
                         "label": symptom.label, "units": total_units,
-                        "fill": "#4dc9f6", "group": 2})
+                        "fill": "#4dc9f6", "group": 2,
+                        "associations": associations})
 
     return json.dumps(event_types)
 
