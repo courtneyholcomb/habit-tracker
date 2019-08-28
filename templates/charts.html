@@ -155,7 +155,8 @@ $("#update-chart").on('click', function (event) {
             .attr("r", (d) => sizeScale(d.units))
             .attr("fill", function (d) {
                 return d.fill;
-            });
+            })
+            .attr("class", "circle");
 
         var labels = groups.append("text")
             .text((d) => d.label)
@@ -189,12 +190,16 @@ $("#update-chart").on('click', function (event) {
         var combineForceX = d3.forceX(width / 2).strength(0.08);
         var combineForceY = d3.forceY(height / 2).strength(0.08);
 
-        d3.select("#group").on("click", function () {
+        function groupCircles () {
             simulation.nodes(datapoints)
                 .force("x", splitForceX)
                 .force("y", splitForceY)
                 .alphaTarget(0.5)
                 .restart();
+        }
+
+        d3.select("#group").on("click", function () {
+            groupCircles();
         });
 
         d3.select("#ungroup").on("click", function () {
@@ -203,7 +208,18 @@ $("#update-chart").on('click', function (event) {
                 .force("y", combineForceY)
                 .alphaTarget(0.5)
                 .restart();
-        }); 
+        });
+
+        d3.selectAll("#bubble-chart g").on("click", function (d) {
+            if (d.label in d3.select(this).data.associations) {
+                d.group = 0;             
+            } else {
+                d.group = 2;
+            }
+
+            groupCircles();
+        });
+
     }
 
 })();
