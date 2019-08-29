@@ -34,7 +34,7 @@ def connect_to_db(app):
     db.init_app(app)
 
 
-### basic routes to register, login, logout
+### Routes to handle user registration, login, logout
 @app.route("/")
 def show_homepage():
     """Show homepage."""
@@ -60,12 +60,15 @@ def validate_login():
 
     try:
         user = db.session.query(User).filter(User.username == username).one()
+
         if not bcrypt.check_password_hash(user.password, password):
             return "Incorrect username or password."
+
         session["username"] = username
         session["user_id"] = user.id
         flash("Login successful")
         return "OK", 200
+
     except:
         return "Incorrect username or password."    
 
@@ -86,6 +89,7 @@ def register():
     password = request.form.get("password")
     confpass = request.form.get("confpass")
 
+    ### Check that email & username are available
     try:
         db.session.query(User).filter_by(email=email).one()
         return "There is already an account associated with that email."
@@ -98,20 +102,20 @@ def register():
     except:
         pass
 
+    ### Validate password
     if len(password) < 8:
         return "Password must be at least 8 characters."
     elif confpass != password:
         return "Passwords entered do not match."
     else:
+        ### If all inputs are valid, create new user & log them in
         hash_pass = bcrypt.generate_password_hash(password).decode("utf-8")
         new_user = User(email=email, username=username, password=hash_pass)
         db.session.add(new_user)
         db.session.commit()
 
         flash("Registration successful")
-
         validate_login()
-
         return "OK", 200
 
 
@@ -124,7 +128,7 @@ def log_out():
     return redirect(url_for('show_login_form'))
 
 
-### routes to add new things to track
+### Routes to add new things to track
 @app.route("/new")
 def show_add_new_form():
     """Show the page where you can create a new Habit, Influence, or Symptom."""
@@ -134,9 +138,29 @@ def show_add_new_form():
         return render_template("new.html", habits=user.habits,
                                influences=user.influences,
                                symptoms=user.symptoms)
+
     else:
         redirect(url_for('show_login_form'))
 
+## route to get user event types
+@app.route("/user-event-types")
+def get_user_event_types():
+    """Get JSON of all Habits, Influences, and Symptoms for logged in User."""
+
+    user = User.query.get(session["user_id"])
+
+    habits = [{"id": habit.id, "label": habit.label, "unit": habit.unit}
+              for habit in Habit.query.filter_by(user_id=user.id).all()]
+    influences = [{"id": infl.id, "label": infl.label, "scale": infl.scale}
+                  for infl in Influence.query.filter_by(user_id=user.id).all()]
+    symptoms = [{"id": symp.id, "label": symp.label, "scale": symp.scale}
+                for symp in Symptom.query.filter_by(user_id=user.id).all()]
+
+    return json.dumps({"habits": habits, "influences": influences,
+        "symptoms": symptoms})
+
+
+## route to get user events
 
 # @app.route("/get-user-info")
 # def get_user_info():

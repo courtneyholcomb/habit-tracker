@@ -27,80 +27,58 @@
 </form>
 <br>
 <h3>Habits Tracked:</h3>
-<table>
-    <tr>
-        <th>Title</th>
-        <th>Unit</th>
-    </tr>
-    {% for habit in habits %}
-        <tr>
-            <td>{{ habit.label }}</td>
-            <td>{{ habit.unit }}</td>
-        </tr>
-    {% endfor %}
-</table>
 <table id="habit-list"></table>
 <br>
 <h3>Influences Tracked:</h3>
-<table>
-    <tr>
-        <th>Title</th>
-        <th>Scale</th>
-    </tr>
-    {% for influence in influences %}
-        <tr>
-            <td>{{ influence.label }}</td>
-            <td>{{ influence.scale }}</td>
-        </tr>
-    {% endfor %}
-</table>
 <table id="influence-list"></table>
 <br>
 <h3>Symptoms Tracked:</h3>
-<table>
-    <tr>
-        <th>Title</th>
-        <th>Scale</th>
-    </tr>
-    {% for symptom in symptoms %}
-        <tr>
-            <td>{{ symptom.label }}</td>
-            <td>{{ symptom.scale }}</td>
-        </tr>
-    {% endfor %}
-</table>
 <table id="symptom-list"></table>
 
 
 <script>
 
-// !!! get list of stuff to update without refreshing?
-// function getUserInfo() {
-//     $.get("/get-user-info", function (response) {
-//         let habits = response.habits
-//         let influences = response.influences
-//         let symptoms = response.symptoms
+let eventInput = $("#event-type");
 
-//         $("#habit-list").html(`<tr><th>Title</th><th>Unit</th></tr>
-//             {% for habit in habits %}
-//                 <tr><td>{{ habit.label }}</td><td>{{ habit.unit }}</td></tr>
-//             {% endfor %}`);
-//         $("#influence-list").html(`<tr><th>Title</th><th>Scale</th></tr>
-//             {% for influence in influences %}
-//                 <tr><td>{{ influence.label }}</td><td>{{ influence.scale }}</td></tr>
-//             {% endfor %}`);
-//         $("#symptom-list").html(`<tr><th>Title</th><th>Scale</th></tr>
-//             {% for symptom in symptoms %}
-//                 <tr><td>{{ symptom.label }}</td><td>{{ symptom.unit }}</td></tr>
-//             {% endfor %}`);
-//     });
-// }
+// show lists of event types when page loads
+function showEventTypes() {
 
-// $(window).on("load", getUserInfo);
+    const habitTableTop = "<tr><th>Title</th><th>Unit</th></tr>";
+    const inflSympTableTop = "<tr><th>Title</th><th>Scale</th></tr>";
+
+    let habitList = "";
+    let influenceList = "";
+    let symptomList = "";
+
+    $.get("/user-event-types", function (response) {
+        data = $.parseJSON(response)
+
+        for (let habit of data.habits) {
+            habitList += `<tr><td>${ habit.label }</td>
+                          <td>${ habit.unit }</td></tr>`;
+        }
+
+        for (let influence of data.influences) {
+            influenceList += `<tr><td>${ influence.label }</td>
+                              <td>${ influence.scale }</td></tr>`;
+        }
+
+        for (let symptom of data.symptoms) {
+            symptomList += `<tr><td>${ symptom.label }</td>
+                            <td>${ symptom.scale }</td></tr>`;
+        }
+
+        $("#habit-list").html(`${habitTableTop} + ${habitList}`);
+        $("#influence-list").html(`${inflSympTableTop} + ${influenceList}`);
+        $("#symptom-list").html(`${inflSympTableTop} + ${symptomList}`);
+
+    });
+}
+
+$(window).on("load", showEventTypes);
 
 
-let eventInput = $("#event-type")
-
+// change input form based on event type selected
 eventInput.on("change", function() {
 
     if (eventInput.val() == "influence" || eventInput.val() == "symptom") {
@@ -114,6 +92,7 @@ eventInput.on("change", function() {
 });
 
 
+// when form is submitted, add type to db, reset form & refresh lists
 function addEventType(event) {
     event.preventDefault();
 
@@ -123,19 +102,21 @@ function addEventType(event) {
         unit: $("#unit").val()
     };
 
-    $.post("/new", formData, function (response) {
+    getEventData = $.post("/new", formData, function (response) {
         alert(response);
         if (response.includes("added successfully")) {
+
             $("#new-form")[0].reset();
+
             $("#unit-or-scale").html(`<label>Unit of measurement: 
             <input type="text" name="unit" id="unit" required></label>`);
-        }
 
+            showEventTypes();
+        }
     });
 }
 
 $("#new-form input[type='submit']").on("click", addEventType);
 
 </script>
-
 {% endblock %}
