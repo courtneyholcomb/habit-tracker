@@ -34,7 +34,7 @@ class Habit(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    label = db.Column(db.String(30), nullable=False)
+    label = db.Column(db.String(30), unique=True, nullable=False)
     unit = db.Column(db.String(20))
 
     def __str__(self):
@@ -72,7 +72,7 @@ class Influence(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    label = db.Column(db.String(30), nullable=False)
+    label = db.Column(db.String(30), unique=True, nullable=False)
     scale = db.Column(db.String(20))     # nullable
 
     def __str__(self):
@@ -112,7 +112,7 @@ class Symptom(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    label = db.Column(db.String(50), nullable=False)
+    label = db.Column(db.String(50), unique=True, nullable=False)
     scale = db.Column(db.String(20))     # nullable
 
     def __str__(self):

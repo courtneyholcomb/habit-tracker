@@ -135,14 +135,12 @@ def show_add_new_form():
 
     if "user_id" in session:
         user = User.query.get(session["user_id"])
-        return render_template("new.html", habits=user.habits,
-                               influences=user.influences,
-                               symptoms=user.symptoms)
+        return render_template("new.html")
 
     else:
         redirect(url_for('show_login_form'))
 
-## route to get user event types
+
 @app.route("/user-event-types")
 def get_user_event_types():
     """Get JSON of all Habits, Influences, and Symptoms for logged in User."""
@@ -160,22 +158,31 @@ def get_user_event_types():
         "symptoms": symptoms})
 
 
-## route to get user events
+def validate_new_event_type(label):
+    """Check if new event type label is already used by User."""
 
-# @app.route("/get-user-info")
-# def get_user_info():
-#     """Get list of Habits, Influences, and Symptoms for logged in User."""
+    user = User.query.get(session["user_id"])
 
-#     user = User.query.get(session["user_id"])
-#     habits = [{"id": habit.id, "label": habit.label, "unit": habit.unit}
-#              for habit in user.habits]
-#     influences = [{"id": influence.id, "label": influence.label, 
-#                  "scale": influence.scale} for influence in user.influences]
-#     symptoms = [{"id": symptom.id, "label": symptom.label,
-#                "scale": symptom.scale} for symptom in user.symptoms]
+    try:
+        if db.session.query(Habit).filter(Habit.label == label,
+                                          Habit.user == user).all():
+            return "You already have a habit with that title."
+    except:
+        pass
 
-#     return json.dumps({"habits": habits, "influences": influences,
-#             "symptoms": symptoms})
+    try:
+        if db.session.query(Influence).filter(Influence.label == label,
+                                              Influence.user == user).all():
+            return "You already have an influence with that title."
+    except:
+            pass
+
+    try:
+        if db.session.query(Symptom).filter(Symptom.label == label,
+                                            Symptom.user == user).all():
+            return "You already have a symptom with that title."
+    except:
+        return None
 
 
 @app.route("/new", methods=["POST"])
@@ -188,22 +195,24 @@ def add_new_event_type():
 
     user = User.query.get(session["user_id"])
 
+    invalid_message = validate_new_event_type(label)
+    if invalid_message:
+        return invalid_message
+    
     if event_type == "habit":
-        labels = [habit.label for habit in user.habits]
         new_event_type = Habit(label=label, unit=unit, user_id=user.id)
-    elif event_type == "influence":
-        labels = [influence.label for influence in user.influences]
-        new_event_type = Influence(label=label, scale=unit, user_id=user.id)
-    elif event_type == "symptom":
-        labels = [symptom.label for symptom in user.symptoms]
-        new_event_type = Symptom(label=label, scale=unit, user_id=user.id)
 
-    if label not in labels:
-        db.session.add(new_event_type)
-        db.session.commit()
-        return f"New {event_type} added successfully!"
-    else:
-        return f"You already have a(n) {event_type} with that title." 
+    elif event_type == "influence":
+        new_event_type = Influence(label=label, scale=unit, user_id=user.id)
+
+    elif event_type == "symptom":
+        new_event_type = Symptom(label=label, scale=unit, user_id=user.id)
+    
+    db.session.add(new_event_type)
+    db.session.commit()
+
+    return f"New {event_type} added successfully!"
+        
 
 
 ### routes to track something
