@@ -13,19 +13,7 @@
         </select>
     </label>
     <br>
-    <div id="event-details">
-        <label>
-            Habit: <select name="type-id" id="type-id" required>
-                {% for habit in habits %}
-                    <option value={{habit.id}}>{{ habit.label }}</option>
-                {% endfor %}
-            </select>
-        </label>
-        <br>
-        <label>
-            Units: <input type="number" name="num" id="num" required> [units]
-        </label>
-    </div>
+    <div id="event-details"></div>
     <label>
         Date/Time (optional): <input type="datetime-local" name="datetime" id="datetime">
     </label>
@@ -57,38 +45,99 @@ Time frame to check (default is past week):
 
 let eventInput = $("#event-type")
 
-eventInput.on("change", function() {
+// function getEventTypes() {
+//     let data = $.get("/user-event-types", function (response) {
+//         return $.parseJSON(response);
+//     });
 
-    if (eventInput.val() == "influence") {
-        $("#event-details").html(`<label>Influence:
-            <select name="type-id" id="type-id" required>
-            {% for influence in influences %}
-                <option value={{influence.id}}>{{ influence.label }}</option>
-            {% endfor %}
-            </select></label><br><label>
-            Intensity: <input type="number" name="num" id="num" 
-            required></label>`);
-    } else if (eventInput.val() == "symptom") {
-        $("#event-details").html(`<label>Symptom:
-            <select name="type-id" id="type-id" required>
-            {% for symptom in symptoms %}
-                <option value={{symptom.id}}>{{ symptom.label }}</option>
-            {% endfor %}
-            </select></label><br><label>
-            Intensity: <input type="number" name="num" id="num" 
-            required></label>`);
-    } else if (eventInput.val() == "habit") {
-        $("#event-details").html(`<label>Habit:
-            <select name="type-id" id="type-id" required>
-            {% for habit in habits %}
-                <option value={{habit.id}}>{{ habit.label }}</option>
-            {% endfor %}
-            </select></label><br><label>
-            Units: <input type="number" name="num" id="num" 
-            required></label>`);
-    }
-  
-});
+//     return data;
+// }
+
+function createDropdowns () {
+    
+    $.get("/user-event-types", function (response) {
+
+        let data = $.parseJSON(response);
+
+
+        $("#event-details").html(function () {
+            let type = eventInput.val();
+            let capType = type.charAt(0).toUpperCase() + type.slice(1);
+            let start = `<label>${capType}: <select name="type-id" id="type-id"
+                         required>`;
+            let options = "";
+            let measurement = "";
+
+            if (type == "habit") {
+                for (let habit of data.habits) {
+                    options += `<option value=${habit.id}>${habit.label}</option>`;
+                };
+
+                measurement += "Units";
+            } else if (type == "influence") {
+                for (let influence of data.influences) {
+                    options += `<option value=${influence.id}>${influence.label}
+                                </option>`;
+                };
+
+                measurement += "Intensity";
+            } else if (type == "symptom") {
+
+                for (let symptom of data.symptoms) {
+                    options += `<option value=${symptom.id}>${symptom.label}
+                                </option>`;
+                };
+
+                measurement += "Intensity";
+            }
+
+            let end = `</select></label><br><label>
+                ${ measurement }: <input type="number" name="num" id="num" 
+                required></label>`;
+
+            return `${start} ${options} ${end}`;
+        });
+    });
+}
+
+$(window).on("load", createDropdowns);
+eventInput.on("change", createDropdowns);
+
+// function showEventTypes() {
+
+//     const habitTableTop = "<tr><th>Title</th><th>Unit</th></tr>";
+//     const inflSympTableTop = "<tr><th>Title</th><th>Scale</th></tr>";
+
+//     let habitList = "";
+//     let influenceList = "";
+//     let symptomList = "";
+
+//     $.get("/user-event-types", function (response) {
+//         data = $.parseJSON(response);
+
+//         for (let habit of data.habits) {
+//             habitList += `<tr><td>${ habit.label }</td>
+//                           <td>${ habit.unit }</td></tr>`;
+//         }
+
+//         for (let influence of data.influences) {
+//             influenceList += `<tr><td>${ influence.label }</td>
+//                               <td>${ influence.scale }</td></tr>`;
+//         }
+
+//         for (let symptom of data.symptoms) {
+//             symptomList += `<tr><td>${ symptom.label }</td>
+//                             <td>${ symptom.scale }</td></tr>`;
+//         }
+
+//         $("#habit-list").html(`${habitTableTop} + ${habitList}`);
+//         $("#influence-list").html(`${inflSympTableTop} + ${influenceList}`);
+//         $("#symptom-list").html(`${inflSympTableTop} + ${symptomList}`);
+
+//     });
+// }
+
+// $(window).on("load", showEventTypes);
 
 
 

@@ -215,16 +215,14 @@ def add_new_event_type():
         
 
 
-### routes to track something
+### routes to track events
 @app.route("/track")
 def show_track_page():
     """Show the page where you can track a Habit, Influence, or Symptom."""
 
     if "user_id" in session:
         user = User.query.get(session["user_id"])
-        return render_template("track.html", habits=user.habits,
-                               influences=user.influences,
-                               symptoms=user.symptoms)
+        return render_template("track.html")
     else:
         return redirect(url_for('show_login_form'))
 
