@@ -483,6 +483,44 @@ def get_line1_data():
     return json.dumps({"labels": str_date_range, "datasets": datasets})
 
 
+def get_associated_events(evt_dates):
+    """Get all even types associated with the given event type.
+
+    Given a list of dates associated with an event type for the logged in User, 
+    get all event types that had events occur on the same, prior, or following 
+    day as given event type."""
+
+    user = User.query.get(session["user_id"])
+
+    prior_dates = set()
+    following_dates = set()
+
+    # Add prior and following dates to dict of event dates
+    for evt_date in evt_dates:
+        prior_dates.add(evt_date - timedelta(days=1))
+        following_dates.add(evt_date + timedelta(days=1))
+
+    assoc_dates = evt_dates | prior_dates | following_dates
+
+    # Get all events for user associated with those dates
+    habit_evts = db.session.query(HabitEvent)\
+                     .filter(HabitEvent.user == user).all()
+    infl_evts = db.session.query(InfluenceEvent)\
+                    .filter(InfluenceEvent.user == user).all()
+    symp_evts = db.session.query(SymptomEvent)\
+                    .filter(SymptomEvent.user == user).all()
+
+    # Get all event labels associated with those dates
+    assoc_habits = [habit_evt.habit.label for habit_evt in habit_evts
+                    if habit_evt.timestamp.date() in assoc_dates]
+    assoc_infls = [infl_evt.influence.label for infl_evt in infl_evts
+                    if infl_evt.timestamp.date() in assoc_dates]
+    assoc_symps = [symp_evt.symptom.label for symp_evt in symp_evts
+                    if symp_evt.timestamp.date() in assoc_dates]
+
+    # Return list of unique labels associated with given event type
+    return list(set(assoc_habits + assoc_infls + assoc_symps))
+
 
 @app.route("/bubble-chart-data")
 def get_bubble_chart_data():
@@ -490,33 +528,17 @@ def get_bubble_chart_data():
 
     user = User.query.get(session["user_id"])
 
-    all_habit_evts = db.session.query(HabitEvent).filter(HabitEvent.user == user).all()
-    all_infl_evts = db.session.query(InfluenceEvent).filter(InfluenceEvent.user == user).all()
-    all_symp_evts = db.session.query(SymptomEvent).filter(SymptomEvent.user == user).all()
-
     event_types = []
 
     for habit in user.habits:
         total_units = 0
-        evt_dates = {}
+        evt_dates = set()
         for habit_event in habit.habit_events:
             total_units += habit_event.num_units
             evt_date = habit_event.timestamp.date()
-            evt_dates[evt_date] = evt_dates.get(evt_date, 0) + habit_event.num_units
+            evt_dates.add(evt_date)
 
-        assoc_habits = [habit_evt.habit.label for habit_evt in all_habit_evts
-                        if habit_evt.timestamp.date() in evt_dates
-                        or (habit_evt.timestamp.date() - timedelta(days=1)) in evt_dates
-                        or (habit_evt.timestamp.date() + timedelta(days=1)) in evt_dates]
-        assoc_infls = [infl_evt.influence.label for infl_evt in all_infl_evts
-                        if infl_evt.timestamp.date() in evt_dates
-                        or (infl_evt.timestamp.date() - timedelta(days=1)) in evt_dates
-                        or (infl_evt.timestamp.date() + timedelta(days=1)) in evt_dates]
-        assoc_symps = [symp_evt.symptom.label for symp_evt in all_symp_evts
-                        if symp_evt.timestamp.date() in evt_dates
-                        or (symp_evt.timestamp.date() - timedelta(days=1)) in evt_dates
-                        or (symp_evt.timestamp.date() + timedelta(days=1)) in evt_dates]
-        associations = list(set(assoc_habits + assoc_infls + assoc_symps))
+        associations = get_associated_events(evt_dates)
 
         event_types.append({"type": "habit", "id": habit.id, "label": habit.label,
                         "units": total_units, "fill": "#f53794", "group": 0,
@@ -525,25 +547,13 @@ def get_bubble_chart_data():
     for influence in user.influences:
         if influence.label != "weather" and influence.label != "temperature":
             total_units = 0
-            evt_dates = {}
+            evt_dates = set()
             for influence_event in influence.influence_events:
                 total_units += influence_event.intensity
                 evt_date = influence_event.timestamp.date()
-                evt_dates[evt_date] = evt_dates.get(evt_date, 0) + influence_event.intensity
+                evt_dates.add(evt_date)
 
-            assoc_habits = [habit_evt.habit.label for habit_evt in all_habit_evts
-                            if habit_evt.timestamp.date() in evt_dates
-                        or (habit_evt.timestamp.date() - timedelta(days=1)) in evt_dates
-                        or (habit_evt.timestamp.date() + timedelta(days=1)) in evt_dates]
-            assoc_infls = [infl_evt.influence.label for infl_evt in all_infl_evts
-                            if infl_evt.timestamp.date() in evt_dates
-                        or (infl_evt.timestamp.date() - timedelta(days=1)) in evt_dates
-                        or (infl_evt.timestamp.date() + timedelta(days=1)) in evt_dates]
-            assoc_symps = [symp_evt.symptom.label for symp_evt in all_symp_evts
-                            if symp_evt.timestamp.date() in evt_dates
-                        or (symp_evt.timestamp.date() - timedelta(days=1)) in evt_dates
-                        or (symp_evt.timestamp.date() + timedelta(days=1)) in evt_dates]
-            associations = list(set(assoc_habits + assoc_infls + assoc_symps))
+            associations = get_associated_events(evt_dates)
 
             event_types.append({"type": "influence", "id": influence.id,
                             "label": influence.label, "units": total_units,
@@ -552,25 +562,13 @@ def get_bubble_chart_data():
 
     for symptom in user.symptoms:
         total_units = 0
-        evt_dates = {}
+        evt_dates = set()
         for symptom_event in symptom.symptom_events:
             total_units += symptom_event.intensity
             evt_date = symptom_event.timestamp.date()
-            evt_dates[evt_date] = evt_dates.get(evt_date, 0) + symptom_event.intensity
+            evt_dates.add(evt_date)
 
-        assoc_habits = [habit_evt.habit.label for habit_evt in all_habit_evts
-                        if habit_evt.timestamp.date() in evt_dates
-                        or (habit_evt.timestamp.date() - timedelta(days=1)) in evt_dates
-                        or (habit_evt.timestamp.date() + timedelta(days=1)) in evt_dates]
-        assoc_infls = [infl_evt.influence.label for infl_evt in all_infl_evts
-                        if infl_evt.timestamp.date() in evt_dates
-                        or (infl_evt.timestamp.date() - timedelta(days=1)) in evt_dates
-                        or (infl_evt.timestamp.date() + timedelta(days=1)) in evt_dates]
-        assoc_symps = [symp_evt.symptom.label for symp_evt in all_symp_evts
-                        if symp_evt.timestamp.date() in evt_dates
-                        or (symp_evt.timestamp.date() - timedelta(days=1)) in evt_dates
-                        or (symp_evt.timestamp.date() + timedelta(days=1)) in evt_dates]
-        associations = list(set(assoc_habits + assoc_infls + assoc_symps))
+        associations = get_associated_events(evt_dates)
 
         event_types.append({"type": "symptom", "id": symptom.id,
                         "label": symptom.label, "units": total_units,
@@ -578,11 +576,6 @@ def get_bubble_chart_data():
                         "associations": associations})
 
     return json.dumps(event_types)
-
-
-
-
-
 
 
 if __name__ == "__main__":
