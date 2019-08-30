@@ -128,13 +128,20 @@ def log_out():
     return redirect(url_for('show_login_form'))
 
 
+def get_user():
+    """Get user object from session."""
+
+    if "user_id" in session:
+        user = User.query.get(session["user_id"])
+        return user
+
+
 ### Routes to add new things to track
 @app.route("/new")
 def show_add_new_form():
     """Show the page where you can create a new Habit, Influence, or Symptom."""
 
-    if "user_id" in session:
-        user = User.query.get(session["user_id"])
+    if get_user():
         return render_template("new.html")
 
     else:
@@ -145,7 +152,7 @@ def show_add_new_form():
 def get_user_event_types():
     """Get JSON of all Habits, Influences, and Symptoms for logged in User."""
 
-    user = User.query.get(session["user_id"])
+    user = get_user()
 
     habits = [{"id": habit.id, "label": habit.label, "unit": habit.unit}
               for habit in Habit.query.filter_by(user_id=user.id).all()]
@@ -161,7 +168,7 @@ def get_user_event_types():
 def validate_new_event_type(label):
     """Check if new event type label is already used by User."""
 
-    user = User.query.get(session["user_id"])
+    user = get_user()
 
     try:
         if db.session.query(Habit).filter(Habit.label == label,
@@ -193,7 +200,7 @@ def add_new_event_type():
     label = request.form.get("label")
     unit = request.form.get("unit")
 
-    user = User.query.get(session["user_id"])
+    user = get_user()
 
     invalid_message = validate_new_event_type(label)
     if invalid_message:
@@ -219,21 +226,47 @@ def add_new_event_type():
 def show_track_page():
     """Show the page where you can track a Habit, Influence, or Symptom."""
 
-    if "user_id" in session:
-        user = User.query.get(session["user_id"])
+    user = get_user()
+
+    if user:
         return render_template("track.html")
     else:
         return redirect(url_for('show_login_form'))
 
 
+def create_event(evt_type, user_id, type_id, num,
+                 timestamp=datetime.now(), lat=None, lon=None):
+    """Instantiate a new event."""
+
+    user_id = session["user_id"]
+
+    if evt_type == "habit":
+        new_event = HabitEvent(user_id=user_id, habit_id=type_id, 
+                                 num_units=num, timestamp=timestamp,
+                                 latitude=lat, longitude=lon)
+    elif evt_type == "influence":
+        new_event = InfluenceEvent(user_id=user_id, influence_id=type_id, 
+                                   intensity=num, timestamp=timestamp,
+                                   latitude=lat, longitude=longitude)
+    elif evt_type == "symptom":
+        new_event = SymptomEvent(user_id=user_id, symptom_id=type_id,
+                                 intensity=num, timestamp=timestamp,
+                                 latitude=lat, longitude=lon)
+    db.session.add(new_event)
+    db.session.commit()
+
+
 @app.route("/track", methods=["POST"])
 def track_something():
-    """Instantiate a new HabitEvent, InfluenceEvent, or SymptomEvent."""
+    """Get inputs from tracking page and instantiate a new event."""
 
     user_id = session["user_id"]
     num = request.form.get("num")
-    event_type = request.form.get("eventType")
+    evt_type = request.form.get("eventType")
     type_id = request.form.get("typeId")
+    location = request.form.get("location")
+    lat = None
+    lon = None
 
     # If the user entered a datetime, use that. if not, use current time.
     time_input = request.form.get("datetime")
@@ -243,39 +276,20 @@ def track_something():
         timestamp = datetime.now()
 
     # If user entered a location, track current weather.
-    location = request.form.get("location")
-    latitude = None
-    longitude = None
-
     if location:
-        coords = location.split(",")
-        latitude = float(coords[0])
-        longitude = float(coords[1])
-        track_current_weather(latitude, longitude)
+        lat, lon = location.split(",")
+        track_current_weather(float(lat), float(lon))
 
-    # Add the event to the db.
-    if event_type == "habit":
-        new_event = HabitEvent(user_id=user_id, habit_id=type_id, 
-                                 num_units=num, timestamp=timestamp,
-                                 latitude=latitude, longitude=longitude)
-    elif event_type == "influence":
-        new_event = InfluenceEvent(user_id=user_id, influence_id=type_id, 
-                                   intensity=num, timestamp=timestamp,
-                                   latitude=latitude, longitude=longitude)
-    elif event_type == "symptom":
-        new_event = SymptomEvent(user_id=user_id, symptom_id=type_id,
-                                 intensity=num, timestamp=timestamp,
-                                 latitude=latitude, longitude=longitude)
-    db.session.add(new_event)
-    db.session.commit()
-
-    return f"{event_type.capitalize()} tracked successfully!"
+    # Add the event to the db and return success message.
+    create_event(evt_type, user_id, type_id, num, timestamp, lat, lon)
+    return f"{evt_type.capitalize()} tracked successfully!"
 
 
-def track_current_weather(latitude, longitude):
+def track_current_weather(lat, lon):
     """Track user's current weather & temp info."""
-    lat = latitude
-    lon = longitude
+
+    user_id = session["user_id"]
+    timestamp = datetime.now()
 
     # Get current weather from Open Weather API for given lat & lon
     weather_token = os.environ.get("WEATHER_TOKEN")
@@ -286,24 +300,14 @@ def track_current_weather(latitude, longitude):
     temp_info = weather_info['main']
     current_temp_f = 9 / 5 * (temp_info['temp'] - 273) + 32
 
-    user_id = session["user_id"]
-    timestamp = datetime.now()
-
     temp_infl = ensure_tracking_infl("temperature", 125)
     weather_infl = ensure_tracking_infl("weather", 1000)
 
-    # Instantiate temp & weather events
-    temp_event = InfluenceEvent(user_id=user_id, influence_id=temp_infl.id,
-                                intensity=current_temp_f, timestamp=timestamp,
-                                latitude=lat, longitude=lon)
-
-    weather_event = InfluenceEvent(user_id=user_id, influence_id=weather_infl.id,
-                                   intensity=weather_id, timestamp=timestamp,
-                                   latitude=lat, longitude=lon)
-
-    db.session.add(temp_event)
-    db.session.add(weather_event)
-    db.session.commit()
+    # Add temp & weather events to db
+    create_event("influence", user_id, temp_infl.id, current_temp_f,
+                 timestamp, lat, lon)
+    create_event("influence", user_id, weather_infl.id, weather_id, timestamp,
+                 lat, lon)
 
 
 def ensure_tracking_infl(label, scale):
@@ -324,11 +328,11 @@ def enable_gcal():
     
     SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
-    user = User.query.get(session["user_id"])
+    user = get_user()
     creds = user.gcal_token
     print(f"creds={creds}")
 
-    # If there are no (valid) credentials available, let the user log in.
+    # If no valid creds, prompt login.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
@@ -337,71 +341,62 @@ def enable_gcal():
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials to db
-        # with open(user.gcal_token, 'wb') as token:
         user.gcal_token = creds
-        # with open('token.pickle', 'wb') as token:
-        #     pickle.dump(creds, token)
 
-    service = build('calendar', 'v3', credentials=creds)
-
-    return service
+    return build('calendar', 'v3', credentials=creds)
 
 
 @app.route("/track-gcal-habits", methods=["POST"])
 def get_events():
     """Track all past week's events with one of User's Habit labels in title."""
 
-    service = enable_gcal()
-
+    user = get_user()
     dt_start = request.form.get("startDate")
     dt_end = request.form.get("endDate")
+    habits = user.habits
+    gcal_info = enable_gcal()
 
     if not dt_start:
         dt_start = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
     if not dt_end:
         dt_end = datetime.utcnow().isoformat() + 'Z'
 
-    calendars = service.calendarList().list().execute()['items']
+    calendars = gcal_info.calendarList().list().execute()['items']
     events = []
     
     for calendar in calendars:
-        events_result = service.events().list(calendarId=calendar['id'],
+        events_result = gcal_info.events().list(calendarId=calendar['id'],
                                         timeMin=dt_start, timeMax=dt_end,
                                         singleEvents=True,
                                         orderBy='startTime').execute()
         events += events_result["items"]
-    
-    user = User.query.get(session["user_id"])
-    habits = user.habits
 
+    # If any GCal events in time range have habit labels in title, track them.
     events_tracked = ""
-    # if any events have habit labels in the title, track them as habit events
     for event in events:
+        # Get info from event
         start = event['start'].get('dateTime', event['start'].get('date'))
         end = event['end'].get('dateTime', event['end'].get('date'))
-        title = event['summary'].lower()
-        title_words = title.split()
+        title = event['summary']
+        title_words = set(title.lower().split())
+
         for habit in habits:
             if habit.label.lower() in title_words:
-                habit_event = HabitEvent(user_id=user.id,
-                                         habit_id=habit.id, 
-                                         num_units=1, timestamp=start)
-                # later: get lat & lon from gcal event location
-                                #,latitude=latitude, longitude=longitude)
-                # prevent duplicates
-                old_habits = db.session.query(HabitEvent)
-                duplicate = old_habits.filter(HabitEvent.user_id == habit_event.user_id,
-                                HabitEvent.timestamp == habit_event.timestamp,
-                                HabitEvent.habit_id == habit_event.habit_id).all()
-                if not duplicate:
-                    db.session.add(habit_event)
-                    events_tracked += f"Habit: {habit.label}, Event: {title} {start}\n"
 
-    db.session.commit()
+                # Check if event is already tracked
+                old_habits = db.session.query(HabitEvent)
+                duplicate = old_habits.filter(HabitEvent.user_id == user.id,
+                                HabitEvent.timestamp == start,
+                                HabitEvent.habit_id == habit.id).all()
+
+                if not duplicate:
+                    create_event("habit", user.id, habit.id, 1, start)
+                    events_tracked += f"Habit: {habit.label}, "\
+                                      f"Event: {title} {start}\n"
 
     return events_tracked
 
-### view your data
+### View your data + charts
 @app.route("/charts")
 def show_charts_page():
     """Show page with User's charts."""
@@ -413,10 +408,11 @@ def show_charts_page():
 def get_line1_data():
     """Get data needed for chart with id = line1."""
 
-    user = User.query.get(session["user_id"])
+    user = get_user()
     start_input = request.form.get("startDate")
     end_input = request.form.get("endDate")
 
+    # If no date range chosen, use trailing week
     if start_input and end_input:
         start = datetime.strptime(start_input, "%Y-%m-%d").date()
         end = datetime.strptime(end_input, "%Y-%m-%d").date()
@@ -429,7 +425,7 @@ def get_line1_data():
     date_range = [(start + timedelta(days=i)) for i in range(num_days)]
     str_date_range = [day.strftime("%m/%d/%Y") for day in date_range]
 
-    # get info for all events that took place during selected time period
+    # Get info for all events that took place during selected time period
     habit_events = db.session.query(HabitEvent).filter(HabitEvent.timestamp
         .between(start, end), HabitEvent.user == user).all()
 
@@ -489,7 +485,7 @@ def get_associated_events(evt_dates):
     get all event types that had events occur on the same, prior, or following 
     day as given event type."""
 
-    user = User.query.get(session["user_id"])
+    user = get_user()
 
     prior_dates = set()
     following_dates = set()
@@ -525,7 +521,7 @@ def get_associated_events(evt_dates):
 def get_bubble_chart_data():
     """Get User's tracked data in JSON format for bubble chart."""
 
-    user = User.query.get(session["user_id"])
+    user = get_user()
     event_types = []
 
     # For each event type's events, get the total units and associated dates
