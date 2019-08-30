@@ -490,6 +490,10 @@ def get_bubble_chart_data():
 
     user = User.query.get(session["user_id"])
 
+    all_habit_evts = db.session.query(HabitEvent).filter(HabitEvent.user == user).all()
+    all_infl_evts = db.session.query(InfluenceEvent).filter(InfluenceEvent.user == user).all()
+    all_symp_evts = db.session.query(SymptomEvent).filter(SymptomEvent.user == user).all()
+
     event_types = []
 
     for habit in user.habits:
@@ -499,12 +503,6 @@ def get_bubble_chart_data():
             total_units += habit_event.num_units
             evt_date = habit_event.timestamp.date()
             evt_dates[evt_date] = evt_dates.get(evt_date, 0) + habit_event.num_units
-
-        # find all events associated with these dates
-        all_habit_evts = db.session.query(HabitEvent).filter(HabitEvent.user == user,
-                         HabitEvent.habit != habit).all()
-        all_infl_evts = db.session.query(InfluenceEvent).filter(InfluenceEvent.user == user).all()
-        all_symp_evts = db.session.query(SymptomEvent).filter(SymptomEvent.user == user).all()
 
         assoc_habits = [habit_evt.habit.label for habit_evt in all_habit_evts
                         if habit_evt.timestamp.date() in evt_dates
@@ -527,13 +525,11 @@ def get_bubble_chart_data():
     for influence in user.influences:
         if influence.label != "weather" and influence.label != "temperature":
             total_units = 0
+            evt_dates = {}
             for influence_event in influence.influence_events:
                 total_units += influence_event.intensity
-
-            all_habit_evts = db.session.query(HabitEvent).filter(HabitEvent.user == user).all()
-            all_infl_evts = db.session.query(InfluenceEvent).filter(InfluenceEvent.user == user,
-                            InfluenceEvent.influence != influence).all()
-            all_symp_evts = db.session.query(SymptomEvent).filter(SymptomEvent.user == user).all()
+                evt_date = influence_event.timestamp.date()
+                evt_dates[evt_date] = evt_dates.get(evt_date, 0) + influence_event.intensity
 
             assoc_habits = [habit_evt.habit.label for habit_evt in all_habit_evts
                             if habit_evt.timestamp.date() in evt_dates
@@ -556,13 +552,11 @@ def get_bubble_chart_data():
 
     for symptom in user.symptoms:
         total_units = 0
+        evt_dates = {}
         for symptom_event in symptom.symptom_events:
             total_units += symptom_event.intensity
-
-        all_habit_evts = db.session.query(HabitEvent).filter(HabitEvent.user == user).all()
-        all_infl_evts = db.session.query(InfluenceEvent).filter(InfluenceEvent.user == user).all()
-        all_symp_evts = db.session.query(SymptomEvent).filter(SymptomEvent.user == user,
-                        SymptomEvent.symptom != symptom).all()
+            evt_date = symptom_event.timestamp.date()
+            evt_dates[evt_date] = evt_dates.get(evt_date, 0) + symptom_event.intensity
 
         assoc_habits = [habit_evt.habit.label for habit_evt in all_habit_evts
                         if habit_evt.timestamp.date() in evt_dates
