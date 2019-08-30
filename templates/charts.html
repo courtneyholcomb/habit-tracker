@@ -3,7 +3,7 @@
 {% block title %}Tracking{% endblock %}
 
 {% block body %}
-
+<h2>Events Over Time</h2>
 <form id="chart-params" action="/line1-data", method="POST">
     <label>
         Start date: <input type="date" name="start-date" id="start-date" required>
@@ -23,6 +23,7 @@
 <br>
 <br>
 <br>
+<h2>Associated Events</h2>
 <button id="group">Group by type</button>
 <button id="ungroup">Ungroup</button>
 <div id="bubble-chart"></div>

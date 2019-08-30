@@ -13,17 +13,7 @@
         </select>
     </label>
     <br>
-    <div id="event-details"></div>
-    <label>
-        Date/Time (optional): <input type="datetime-local" name="datetime" id="datetime">
-    </label>
-    <br>
-    <label>
-        <button class="location-button" id="location-button">Get My Location</button>
-        <input type="text" name="location" id="location">
-    </label>
-    <br>
-    <input type="submit" id="submut-button">
+    <div id="type-dependent"></div>
 </form>
 <br>
 <h4>Pull events from GCal:</h4>
@@ -40,107 +30,83 @@ Time frame to check (default is past week):
 <br>
 
 
-
 <script>
 
 let eventInput = $("#event-type")
 
-// function getEventTypes() {
-//     let data = $.get("/user-event-types", function (response) {
-//         return $.parseJSON(response);
-//     });
 
-//     return data;
-// }
-
+// this will populate the dropdown menus based on user's tracked event types
 function createDropdowns () {
     
     $.get("/user-event-types", function (response) {
 
         let data = $.parseJSON(response);
 
-
-        $("#event-details").html(function () {
+        // based on event type user chooses, fill in dropdowns
+        // if user has nothing added for that type, link to add new page
+        $("#type-dependent").html(function () {
             let type = eventInput.val();
             let capType = type.charAt(0).toUpperCase() + type.slice(1);
             let start = `<label>${capType}: <select name="type-id" id="type-id"
                          required>`;
             let options = "";
             let measurement = "";
+            let end = `<input type="number" name="num" id="num" required></label>
+                       <label>Date/Time (optional):
+                       <input type="datetime-local" name="datetime" id="datetime">
+                       </label><br><label>
+                       <button class="location-button" id="location-button">Get My Location</button>
+                       <input type="text" name="location" id="location"></label>
+                       <br><input type="submit" id="submut-button">`;
 
             if (type == "habit") {
-                for (let habit of data.habits) {
-                    options += `<option value=${habit.id}>${habit.label}</option>`;
-                };
+                if (data.habits == true) {
+                    for (let habit of data.habits) {
+                        options += `<option value=${habit.id}>${habit.label}</option>`;
+                    };
+                    measurement += `</select></label><br><label>Units: `;
 
-                measurement += "Units";
+                    return `${start} ${options} ${measurement} ${end}`;
+
+                } else {
+                    return `<a href="/new">Add some habits to track here!</a>`;
+                }
+
             } else if (type == "influence") {
-                for (let influence of data.influences) {
-                    options += `<option value=${influence.id}>${influence.label}
-                                </option>`;
-                };
+                if (data.influences == true) {
+                    for (let influence of data.influences) {
+                        options += `<option value=${influence.id}>${influence.label}
+                                    </option>`;
+                    };
+                    measurement += `</select></label><br><label>Intensity: `;
 
-                measurement += "Intensity";
+                    return `${start} ${options} ${measurement} ${end}`;
+
+                } else {
+                    return `<a href="/new">Add some influences to track here!</a>`;
+                }
+
             } else if (type == "symptom") {
-
-                for (let symptom of data.symptoms) {
-                    options += `<option value=${symptom.id}>${symptom.label}
-                                </option>`;
-                };
-
-                measurement += "Intensity";
+                if (data.symptoms == true) {
+                    for (let symptom of data.symptoms) {
+                        options += `<option value=${symptom.id}>${symptom.label}
+                                    </option>`;
+                    };
+                    measurement += `</select></label><br><label>Intensity: `;
+                } else {
+                    return `<a href="/new">Add some symptoms to track here!</a>`;
+                }
             }
-
-            let end = `</select></label><br><label>
-                ${ measurement }: <input type="number" name="num" id="num" 
-                required></label>`;
-
-            return `${start} ${options} ${end}`;
         });
     });
 }
 
+// populate dropdowns when page loads & when user chooses new event type
 $(window).on("load", createDropdowns);
 eventInput.on("change", createDropdowns);
 
-// function showEventTypes() {
 
-//     const habitTableTop = "<tr><th>Title</th><th>Unit</th></tr>";
-//     const inflSympTableTop = "<tr><th>Title</th><th>Scale</th></tr>";
-
-//     let habitList = "";
-//     let influenceList = "";
-//     let symptomList = "";
-
-//     $.get("/user-event-types", function (response) {
-//         data = $.parseJSON(response);
-
-//         for (let habit of data.habits) {
-//             habitList += `<tr><td>${ habit.label }</td>
-//                           <td>${ habit.unit }</td></tr>`;
-//         }
-
-//         for (let influence of data.influences) {
-//             influenceList += `<tr><td>${ influence.label }</td>
-//                               <td>${ influence.scale }</td></tr>`;
-//         }
-
-//         for (let symptom of data.symptoms) {
-//             symptomList += `<tr><td>${ symptom.label }</td>
-//                             <td>${ symptom.scale }</td></tr>`;
-//         }
-
-//         $("#habit-list").html(`${habitTableTop} + ${habitList}`);
-//         $("#influence-list").html(`${inflSympTableTop} + ${influenceList}`);
-//         $("#symptom-list").html(`${inflSympTableTop} + ${symptomList}`);
-
-//     });
-// }
-
-// $(window).on("load", showEventTypes);
-
-
-
+// this will get the user's location from the browser
 function getLocation(event) {
     event.preventDefault();
     navigator.geolocation.getCurrentPosition(function (position) {
@@ -148,11 +114,12 @@ function getLocation(event) {
         });
     alert("Location retrieved");
 }
-    
+
+// get location when button is clicked
 $("#location-button").on('click', getLocation);
 
 
-
+// this will track event based on user inputs
 function trackEvent(event) {
     event.preventDefault();
 
@@ -180,11 +147,13 @@ function trackEvent(event) {
     });
 
 }
-    
+
+// track event when user submits form
 $('#track-form input[type="submit"]').on('click', trackEvent);
 
 
-
+// this will enable GCal and track events from selected time period
+// (or trailing week by default)
 function trackGcalHabits(event) {
     event.preventDefault();
     
@@ -197,12 +166,12 @@ function trackGcalHabits(event) {
         if (response == "") {
             alert("No new events to track.");
         } else {
-        alert(`Events tracked:\n${response}`);
-    }
-
+            alert(`Events tracked:\n${response}`);
+        }
     });
 }
 
+// track GCal events when user clicks button 
 $("#gcal-habits-button").on('click', trackGcalHabits);
 
 </script>

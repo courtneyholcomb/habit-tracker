@@ -68,10 +68,23 @@ function showEventTypes() {
                             <td>${ symptom.scale }</td></tr>`;
         }
 
-        $("#habit-list").html(`${habitTableTop} + ${habitList}`);
-        $("#influence-list").html(`${inflSympTableTop} + ${influenceList}`);
-        $("#symptom-list").html(`${inflSympTableTop} + ${symptomList}`);
+        if (habitList) {
+            $("#habit-list").html(`${habitTableTop} + ${habitList}`);
+        } else {
+            $("#habit-list").html("Use the above form to add some habits.");
+        } 
 
+        if (influenceList) {
+            $("#influence-list").html(`${inflSympTableTop} + ${influenceList}`);
+        } else {
+            $("#influence-list").html("Use the above form to add some influences.");
+        } 
+        
+        if (symptomList) {
+            $("#symptom-list").html(`${inflSympTableTop} + ${symptomList}`);
+        } else {
+            $("#symptom-list").html("Use the above form to add some symptoms.");
+        }
     });
 }
 
