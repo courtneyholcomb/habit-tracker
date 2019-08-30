@@ -214,8 +214,7 @@ def add_new_event_type():
     return f"New {event_type} added successfully!"
         
 
-
-### routes to track events
+### Routes to track events
 @app.route("/track")
 def show_track_page():
     """Show the page where you can track a Habit, Influence, or Symptom."""
@@ -233,17 +232,17 @@ def track_something():
 
     user_id = session["user_id"]
     num = request.form.get("num")
-
     event_type = request.form.get("eventType")
     type_id = request.form.get("typeId")
 
-    # if the user entered a datetime, use that. if not, use current time.
+    # If the user entered a datetime, use that. if not, use current time.
     time_input = request.form.get("datetime")
     if time_input:
         timestamp = datetime.fromisoformat(time_input)
     else:
         timestamp = datetime.now()
 
+    # If user entered a location, track current weather.
     location = request.form.get("location")
     latitude = None
     longitude = None
@@ -254,6 +253,7 @@ def track_something():
         longitude = float(coords[1])
         track_current_weather(latitude, longitude)
 
+    # Add the event to the db.
     if event_type == "habit":
         new_event = HabitEvent(user_id=user_id, habit_id=type_id, 
                                  num_units=num, timestamp=timestamp,
@@ -277,9 +277,9 @@ def track_current_weather(latitude, longitude):
     lat = latitude
     lon = longitude
 
+    # Get current weather from Open Weather API for given lat & lon
     weather_token = os.environ.get("WEATHER_TOKEN")
     response_obj = requests.get(f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&APPID={weather_token}")
-
     weather_info = response_obj.json()
     weather_id = weather_info['weather'][0]['id']
 
@@ -288,25 +288,11 @@ def track_current_weather(latitude, longitude):
 
     user_id = session["user_id"]
     timestamp = datetime.now()
-    
-    # if user doesn't track temp & weather yet, add them
-    try:
-        temp_infl = Influence.query.filter_by(label="temperature").one()
-    except:
-        new_infl = Influence(label="temperature", scale=125, user_id=user_id)
-        db.session.add(new_infl)
-        db.session.commit()
-        temp_infl = Influence.query.filter_by(label="temperature").one()
 
-    try:
-        weather_infl = Influence.query.filter_by(label='weather').one()
-    except:
-        new_infl = Influence(label="weather", scale=1000, user_id=user_id)
-        db.session.add(new_infl)
-        db.session.commit()
-        weather_infl = Influence.query.filter_by(label='weather').one()
+    temp_infl = ensure_tracking_infl("temperature", 125)
+    weather_infl = ensure_tracking_infl("weather", 1000)
 
-    # instantiate temp & weather events
+    # Instantiate temp & weather events
     temp_event = InfluenceEvent(user_id=user_id, influence_id=temp_infl.id,
                                 intensity=current_temp_f, timestamp=timestamp,
                                 latitude=lat, longitude=lon)
@@ -318,6 +304,19 @@ def track_current_weather(latitude, longitude):
     db.session.add(temp_event)
     db.session.add(weather_event)
     db.session.commit()
+
+
+def ensure_tracking_infl(label, scale):
+    """If user doesn't track influence yet, add it."""
+
+    try:
+        return Influence.query.filter_by(label=label).one()
+
+    except:
+        new_infl = Influence(label=label, scale=scale, user_id=user_id)
+        db.session.add(new_infl)
+        db.session.commit()
+        return new_infl
 
 
 def enable_gcal():
@@ -527,51 +526,48 @@ def get_bubble_chart_data():
     """Get User's tracked data in JSON format for bubble chart."""
 
     user = User.query.get(session["user_id"])
-
     event_types = []
 
+    # For each event type's events, get the total units and associated dates
     for habit in user.habits:
-        total_units = 0
+        units = 0
         evt_dates = set()
         for habit_event in habit.habit_events:
-            total_units += habit_event.num_units
-            evt_date = habit_event.timestamp.date()
-            evt_dates.add(evt_date)
+            units += habit_event.num_units
+            evt_dates.add(habit_event.timestamp.date())
 
         associations = get_associated_events(evt_dates)
 
         event_types.append({"type": "habit", "id": habit.id, "label": habit.label,
-                        "units": total_units, "fill": "#f53794", "group": 0,
+                        "units": units, "fill": "#f53794", "group": 0,
                         "associations": associations})
 
     for influence in user.influences:
         if influence.label != "weather" and influence.label != "temperature":
-            total_units = 0
+            units = 0
             evt_dates = set()
             for influence_event in influence.influence_events:
-                total_units += influence_event.intensity
-                evt_date = influence_event.timestamp.date()
-                evt_dates.add(evt_date)
+                units += influence_event.intensity
+                evt_dates.add(influence_event.timestamp.date())
 
             associations = get_associated_events(evt_dates)
 
             event_types.append({"type": "influence", "id": influence.id,
-                            "label": influence.label, "units": total_units,
+                            "label": influence.label, "units": units,
                             "fill": "#f67019", "group": 1,
                             "associations": associations})
 
     for symptom in user.symptoms:
-        total_units = 0
+        units = 0
         evt_dates = set()
         for symptom_event in symptom.symptom_events:
-            total_units += symptom_event.intensity
-            evt_date = symptom_event.timestamp.date()
-            evt_dates.add(evt_date)
+            units += symptom_event.intensity
+            evt_dates.add(symptom_event.timestamp.date())
 
         associations = get_associated_events(evt_dates)
 
         event_types.append({"type": "symptom", "id": symptom.id,
-                        "label": symptom.label, "units": total_units,
+                        "label": symptom.label, "units": units,
                         "fill": "#4dc9f6", "group": 2,
                         "associations": associations})
 
