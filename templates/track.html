@@ -52,7 +52,7 @@ function createDropdowns () {
             let options = "";
             let measurement = "";
             let end = `<input type="number" name="num" id="num" required></label>
-                       <label>Date/Time (optional):
+                       <br><label>Date/Time (optional):
                        <input type="datetime-local" name="datetime" id="datetime">
                        </label><br><label>
                        <button class="location-button" id="location-button">Get My Location</button>
@@ -60,7 +60,7 @@ function createDropdowns () {
                        <br><input type="submit" id="submut-button">`;
 
             if (type == "habit") {
-                if (data.habits == true) {
+                if (data.habits != false) {
                     for (let habit of data.habits) {
                         options += `<option value=${habit.id}>${habit.label}</option>`;
                     };
@@ -73,7 +73,7 @@ function createDropdowns () {
                 }
 
             } else if (type == "influence") {
-                if (data.influences == true) {
+                if (data.influences != false) {
                     for (let influence of data.influences) {
                         options += `<option value=${influence.id}>${influence.label}
                                     </option>`;
@@ -87,7 +87,7 @@ function createDropdowns () {
                 }
 
             } else if (type == "symptom") {
-                if (data.symptoms == true) {
+                if (data.symptoms != false) {
                     for (let symptom of data.symptoms) {
                         options += `<option value=${symptom.id}>${symptom.label}
                                     </option>`;
@@ -130,19 +130,13 @@ function trackEvent(event) {
         datetime: $("#datetime").val(), 
         location: $("#location").val()
     };
+    debugger;
 
     $.post("/track", inputs, function (response) {
         if (response.includes("tracked successfully")) {
             alert(response);
             $("#track-form")[0].reset();
-            $("#event-details").html(`<label>Habit:
-            <select name="type-id" id="type-id" required>
-            {% for habit in habits %}
-                <option value={{habit.id}}>{{ habit.label }}</option>
-            {% endfor %}
-            </select></label><br><label>
-            Units: <input type="number" name="num" id="num" 
-            required></label>`);
+            createDropdowns()
         }
     });
 

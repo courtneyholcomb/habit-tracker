@@ -4,7 +4,7 @@
 
 {% block body %}
 <h2>Events Over Time</h2>
-<form id="chart-params" action="/line1-data", method="POST">
+<form id="chart-params" action="/line-chart-data", method="POST">
     <label>
         Start date: <input type="date" name="start-date" id="start-date" required>
     </label>
@@ -16,9 +16,9 @@
     <input type="submit" id="update-chart">
 </form>
 
-<div class="line-chart">
-    <canvas id="line1" width="400" height="300"></canvas>
-    <div id="line1-legend" class="chart-legend"></div>
+<div class="chart">
+    <canvas id="line-chart" width="400" height="300"></canvas>
+    <div id="line-legend" class="chart-legend"></div>
 </div>
 <br>
 <br>
@@ -32,16 +32,16 @@
 <script type="text/javascript">
 
 ////// Create line chart:
-let line1_canvas = $("#line1").get(0).getContext("2d");
+let line_canvas = $("#line-chart").get(0).getContext("2d");
 
 // fill in chart info when page loads (default time range is past week)
 window.onload = function () {
-    $.post("/line1-data", function (response) {
+    $.post("/line-chart-data", function (response) {
         let data = $.parseJSON(response);
         let labels = data.labels;
         let datasets = data.datasets;
 
-        let line_chart = new Chart(line1_canvas, {
+        let line_chart = new Chart(line_canvas, {
             type: 'line',
             data: {
                 labels: labels,
@@ -61,12 +61,12 @@ $("#update-chart").on('click', function (event) {
         endDate: $("#end-date").val()
     };
 
-    $.post("/line1-data", dates, function (response) {
+    $.post("/line-chart-data", dates, function (response) {
         let data = $.parseJSON(response);
         let labels = data.labels;
         let datasets = data.datasets;
 
-        let line_chart = new Chart(line1_canvas, {
+        let line_chart = new Chart(line_canvas, {
             type: 'line',
             data: {
                 labels: labels,

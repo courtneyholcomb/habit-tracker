@@ -267,6 +267,7 @@ def track_something():
     location = request.form.get("location")
     lat = None
     lon = None
+    pdb.set_trace()
 
     # If the user entered a datetime, use that. if not, use current time.
     time_input = request.form.get("datetime")
@@ -347,7 +348,7 @@ def enable_gcal():
 
 
 @app.route("/track-gcal-habits", methods=["POST"])
-def get_events():
+def get_gcal_events():
     """Track all past week's events with one of User's Habit labels in title."""
 
     user = get_user()
@@ -384,12 +385,12 @@ def get_events():
             if habit.label.lower() in title_words:
 
                 # Check if event is already tracked
-                old_habits = db.session.query(HabitEvent)
-                duplicate = old_habits.filter(HabitEvent.user_id == user.id,
-                                HabitEvent.timestamp == start,
-                                HabitEvent.habit_id == habit.id).all()
+                duplicates = db.session.query(HabitEvent)\
+                             .filter(HabitEvent.user_id == user.id,
+                                     HabitEvent.timestamp == start,
+                                     HabitEvent.habit_id == habit.id).all()
 
-                if not duplicate:
+                if not duplicates:
                     create_event("habit", user.id, habit.id, 1, start)
                     events_tracked += f"Habit: {habit.label}, "\
                                       f"Event: {title} {start}\n"
@@ -404,9 +405,9 @@ def show_charts_page():
     return render_template("charts.html")
 
 
-@app.route("/line1-data", methods=["POST"])
-def get_line1_data():
-    """Get data needed for chart with id = line1."""
+@app.route("/line-chart-data", methods=["POST"])
+def get_line_chart_data():
+    """Get data needed for line chart."""
 
     user = get_user()
     start_input = request.form.get("startDate")
