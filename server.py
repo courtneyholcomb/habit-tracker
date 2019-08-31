@@ -154,11 +154,14 @@ def get_user_event_types():
 
     user = get_user()
 
-    habits = [{"id": habit.id, "label": habit.label, "unit": habit.unit}
+    habits = [{"id": habit.id, "label": habit.label, "unit": habit.unit,
+               "object": habit}
               for habit in Habit.query.filter_by(user_id=user.id).all()]
-    influences = [{"id": infl.id, "label": infl.label, "scale": infl.scale}
+    influences = [{"id": infl.id, "label": infl.label, "scale": infl.scale,
+                   "object": infl}
                   for infl in Influence.query.filter_by(user_id=user.id).all()]
-    symptoms = [{"id": symp.id, "label": symp.label, "scale": symp.scale}
+    symptoms = [{"id": symp.id, "label": symp.label, "scale": symp.scale,
+                 "object": symp}
                 for symp in Symptom.query.filter_by(user_id=user.id).all()]
 
     return json.dumps({"habits": habits, "influences": influences,
@@ -405,11 +408,81 @@ def show_charts_page():
     return render_template("charts.html")
 
 
+def get_events_in_range(start, end):
+    """Get all events that occurred during given date range for user."""
+
+    user = get_user()
+
+    habit_events = db.session.query(HabitEvent).filter(HabitEvent.timestamp
+        .between(start, end), HabitEvent.user == user).all()
+
+    influence_events = db.session.query(InfluenceEvent).filter(
+        InfluenceEvent.timestamp.between(start, end),
+        InfluenceEvent.user == user).all()
+
+    symptom_events = db.session.query(SymptomEvent).filter(
+        SymptomEvent.timestamp.between(start, end),
+        SymptomEvent.user == user).all()
+
+    return {"habit_events": habit_events, "influence_events": influence_events, 
+            "symptom_events": symptom_events}
+
+def get_evt_type_min_max(evt_type, label):
+    """Get the min and max units for a user's events."""
+
+    user = get_user()
+
+    if evt_type == "habit"
+        type_option = db.session.query(Habit).filter(Habit.user == user,
+                                                     Habit.label == label)
+        units = [evt.num_units for evt in type_option.habit_events]
+
+    elif evt_type == "influence"
+        type_option = db.session.query(Influence).filter(Influence.user == user,
+                                                       Influence.label == label)
+        units = [evt.num_units for evt in type_option.influence_events]
+
+    elif evt_type == "symptom"
+        type_option = db.session.query(Symptom).filter(Symptom.user == user,
+                                                       Symptom.label == label)
+        units = [evt.num_units for evt in type_option.symptom_events]
+
+    return {"min": min(units), "max": max(units)}
+
+
+def get_event_infos(start, end):
+    """Reformat events info to be used later for line chart."""
+
+    events_dict = get_events_in_range(start, end)
+    habit_events = events_dict["habit_events"]
+    influence_events = events_dict["influence_events"]
+    symptom_events = events_dict["symptom_events"]
+
+
+    habit_event_info = [(habit_event.habit, habit_event, habit_event.num_units,
+                         "habit")
+                         for habit_event in habit_events]
+
+    influence_event_info = [(influence_event.influence, influence_event,
+                             influence_event.intensity, "influence")
+                            for influence_event in influence_events
+                            if influence_event.influence.label 
+                                not in ["weather", "temperature"]]
+
+    symptom_event_info = [(symptom_event.symptom, symptom_event,
+                           symptom_event.intensity, "symptom")
+                          for symptom_event in symptom_events]
+
+    event_infos = habit_event_info + influence_event_info + symptom_event_info
+    event_labels = list(set(info[0].label for info in event_infos))
+
+    return {"event_infos": event_infos, "event_labels": event_labels}
+
+
 @app.route("/line-chart-data", methods=["POST"])
 def get_line_chart_data():
     """Get data needed for line chart."""
 
-    user = get_user()
     start_input = request.form.get("startDate")
     end_input = request.form.get("endDate")
 
@@ -426,33 +499,9 @@ def get_line_chart_data():
     date_range = [(start + timedelta(days=i)) for i in range(num_days)]
     str_date_range = [day.strftime("%m/%d/%Y") for day in date_range]
 
-    # Get info for all events that took place during selected time period
-    habit_events = db.session.query(HabitEvent).filter(HabitEvent.timestamp
-        .between(start, end), HabitEvent.user == user).all()
-
-    habit_event_info = [(habit_event.habit, habit_event, habit_event.num_units)
-                         for habit_event in habit_events]
-
-    influence_events = db.session.query(InfluenceEvent).filter(
-        InfluenceEvent.timestamp.between(start, end),
-        InfluenceEvent.user == user).all()
-
-    influence_event_info = [(influence_event.influence, influence_event,
-                             influence_event.intensity)
-                            for influence_event in influence_events
-                            if influence_event.influence.label != "weather"]
-
-    symptom_events = db.session.query(SymptomEvent).filter(
-        SymptomEvent.timestamp.between(start, end),
-        SymptomEvent.user == user).all()
-
-    symptom_event_info = [(symptom_event.symptom, symptom_event,
-                           symptom_event.intensity)
-                          for symptom_event in symptom_events]
-
-    events = habit_events + influence_events + symptom_events
-    event_infos = habit_event_info + influence_event_info + symptom_event_info
-    event_labels = list(set(info[0].label for info in event_infos))
+    events_data = get_event_infos(start, end)
+    event_infos = events_data["event_infos"]
+    event_labels = events_data["event_labels"]
 
     graph_colors = ['#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236', 
                   '#166a8f', '#00a950', '#58595b', '#8549ba']
@@ -460,6 +509,7 @@ def get_line_chart_data():
     datasets = []
 
     for i, event_label in enumerate(event_labels):
+        # get min & max units for that label
         # day_units = sum of units for given event type on given day
         day_units = []
         for day in date_range:
