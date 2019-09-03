@@ -49,7 +49,6 @@ function showEventTypes() {
     let habitList = "";
     let influenceList = "";
     let symptomList = "";
-    debugger;
 
     $.get("/user-event-types", function (response) {
         data = $.parseJSON(response)

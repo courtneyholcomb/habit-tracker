@@ -628,9 +628,31 @@ def get_bubble_chart_data():
     return json.dumps(event_types)
 
 
+### YOGA CLASS PICKER!
+@app.route("/yoga-classes")
+def get_yoga_classes():
+    """Get JSON-formatted yoga classes for given day."""
+
+    day = datetime.now().date()
+    next_day = day + timedelta(days=1)
+    love_story = f"https://prod-swamis.mindbody.io/api/v1/search/class_times?sort=start_time&page%5Bsize%5D=100&page%5Bnumber%5D=1&filter%5Bstart_time_from%5D={day}T07%3A00%3A00.000Z&filter%5Bstart_time_to%5D={next_day}T06%3A59%3A59.999Z&filter%5Bdynamic_priceable%5D=any&filter%5Binclude_dynamic_pricing%5D=true&filter%5Blocation_slug%5D=love-story-yoga-mission-dolores"
+
+    class_data = requests.get(love_story).json()['data']
+    
+    for clas in class_data:
+        info = clas["attributes"]
+
+        start = info["class_time_blackout_start_time"]
+        title = info["course_name"]
+        duration = info["class_time_duration"]
+        end = info["class_time_end_time"]
+        instructor = info["instructor_name"]
+        print(title, instructor, start, end, duration) 
+
+
 if __name__ == "__main__":
     app.debug = True
     connect_to_db(app)
     DebugToolbarExtension(app)
 
-    app.run(port=5000, host='0.0.0.0')
+    # app.run(port=5000, host='0.0.0.0')
