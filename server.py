@@ -154,14 +154,11 @@ def get_user_event_types():
 
     user = get_user()
 
-    habits = [{"id": habit.id, "label": habit.label, "unit": habit.unit,
-               "object": habit}
+    habits = [{"id": habit.id, "label": habit.label, "unit": habit.unit}
               for habit in Habit.query.filter_by(user_id=user.id).all()]
-    influences = [{"id": infl.id, "label": infl.label, "scale": infl.scale,
-                   "object": infl}
+    influences = [{"id": infl.id, "label": infl.label, "scale": infl.scale}
                   for infl in Influence.query.filter_by(user_id=user.id).all()]
-    symptoms = [{"id": symp.id, "label": symp.label, "scale": symp.scale,
-                 "object": symp}
+    symptoms = [{"id": symp.id, "label": symp.label, "scale": symp.scale}
                 for symp in Symptom.query.filter_by(user_id=user.id).all()]
 
     return json.dumps({"habits": habits, "influences": influences,
@@ -432,20 +429,20 @@ def get_evt_type_min_max(evt_type, label):
 
     user = get_user()
 
-    if evt_type == "habit"
+    if evt_type == "habit":
         type_option = db.session.query(Habit).filter(Habit.user == user,
-                                                     Habit.label == label)
+                                                    Habit.label == label).one()
         units = [evt.num_units for evt in type_option.habit_events]
 
-    elif evt_type == "influence"
+    elif evt_type == "influence":
         type_option = db.session.query(Influence).filter(Influence.user == user,
-                                                       Influence.label == label)
-        units = [evt.num_units for evt in type_option.influence_events]
+                                                Influence.label == label).one()
+        units = [evt.intensity for evt in type_option.influence_events]
 
-    elif evt_type == "symptom"
+    elif evt_type == "symptom":
         type_option = db.session.query(Symptom).filter(Symptom.user == user,
-                                                       Symptom.label == label)
-        units = [evt.num_units for evt in type_option.symptom_events]
+                                                Symptom.label == label).one()
+        units = [evt.intensity for evt in type_option.symptom_events]
 
     return {"min": min(units), "max": max(units)}
 
@@ -465,18 +462,17 @@ def get_event_infos(start, end):
 
     influence_event_info = [(influence_event.influence, influence_event,
                              influence_event.intensity, "influence")
-                            for influence_event in influence_events
-                            if influence_event.influence.label 
-                                not in ["weather", "temperature"]]
+                            for influence_event in influence_events]
+                            # if influence_event.influence.label 
+                            #     not in ["weather", "temperature"]]
 
     symptom_event_info = [(symptom_event.symptom, symptom_event,
                            symptom_event.intensity, "symptom")
                           for symptom_event in symptom_events]
 
     event_infos = habit_event_info + influence_event_info + symptom_event_info
-    event_labels = list(set(info[0].label for info in event_infos))
 
-    return {"event_infos": event_infos, "event_labels": event_labels}
+    return event_infos
 
 
 @app.route("/line-chart-data", methods=["POST"])
@@ -499,28 +495,39 @@ def get_line_chart_data():
     date_range = [(start + timedelta(days=i)) for i in range(num_days)]
     str_date_range = [day.strftime("%m/%d/%Y") for day in date_range]
 
-    events_data = get_event_infos(start, end)
-    event_infos = events_data["event_infos"]
-    event_labels = events_data["event_labels"]
+    event_infos = get_event_infos(start, end)
+    labels_types = list({(info[0].label, info[3]) for info in event_infos})
 
     graph_colors = ['#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236', 
                   '#166a8f', '#00a950', '#58595b', '#8549ba']
 
     datasets = []
 
-    for i, event_label in enumerate(event_labels):
+    for i, label_type in enumerate(labels_types):
         # get min & max units for that label
-        # day_units = sum of units for given event type on given day
-        day_units = []
+        min_max = get_evt_type_min_max(label_type[1], label_type[0])
+        label_min = min_max['min']
+        label_max = min_max['max']
+        
+        # take max units for event label on given day, find % of label's range
+        # later: ideally, make min max function find min and max based on day,
+        #    not based on event occurrence
+        day_percents = []
         for day in date_range:
-            unit_list = [info[2] for info in event_infos
+            day_units = [info[2] for info in event_infos
                          if info[1].timestamp.date() == day
-                         and info[0].label == event_label]
-            day_units.append(sum(unit_list))
+                         and info[0].label == label_type[0]]
+            if label_max == label_min and day_units:
+                unit_percent = 1
+            elif label_max != label_min and day_units:
+                unit_percent = (max(day_units) - label_min) / (label_max - label_min)
+            else:
+                unit_percent = 0
+            day_percents.append(unit_percent)
 
         datasets.append({
-            "label": event_label,
-            "data": day_units,
+            "label": label_type[0],
+            "data": day_percents,
             "borderColor": graph_colors[i % len(graph_colors)],
             "borderWidth": 3,
             "fill": False
