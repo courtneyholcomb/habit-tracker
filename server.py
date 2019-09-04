@@ -640,10 +640,10 @@ def show_class_picker():
 def get_yoga_classes():
     """Get JSON-formatted yoga classes for given day."""
 
-    start = datetime.now().date()
-    end = start + timedelta(days=1)
-    love_story = f"https://prod-swamis.mindbody.io/api/v1/search/class_times?sort=start_time&page%5Bsize%5D=100&page%5Bnumber%5D=1&filter%5Bstart_time_from%5D={start}T07%3A00%3A00.000Z&filter%5Bstart_time_to%5D={end}T06%3A59%3A59.999Z&filter%5Bdynamic_priceable%5D=any&filter%5Binclude_dynamic_pricing%5D=true&filter%5Blocation_slug%5D=love-story-yoga-mission-dolores"
-
+    start = datetime.now().isoformat()
+    end = (start + timedelta(days=1)).isoformat()
+    love_story = f"https://prod-swamis.mindbody.io/api/v1/search/class_times?sort=start_time&page%5Bsize%5D=100&page%5Bnumber%5D=1&filter%5Bstart_time_from%5D={start}&filter%5Bstart_time_to%5D={end}&filter%5Bdynamic_priceable%5D=any&filter%5Binclude_dynamic_pricing%5D=true&filter%5Blocation_slug%5D=love-story-yoga-mission-dolores"
+# .replace(" ","T").replace(":", "%3A")
     class_data = requests.get(love_story).json()['data']
     data_list = []
     
