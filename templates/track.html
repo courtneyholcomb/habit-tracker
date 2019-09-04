@@ -130,7 +130,6 @@ function trackEvent(event) {
         datetime: $("#datetime").val(), 
         location: $("#location").val()
     };
-    debugger;
 
     $.post("/track", inputs, function (response) {
         if (response.includes("tracked successfully")) {
@@ -153,7 +152,7 @@ function trackGcalHabits(event) {
     
     const inputs = { 
         startDate: $("#start-date").val(),
-        endDate: $("#start-date").val()
+        endDate: $("#end-date").val()
     };
 
     $.post("/track-gcal-habits", inputs, function (response) {

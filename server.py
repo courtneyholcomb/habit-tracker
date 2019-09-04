@@ -4,6 +4,8 @@ import requests
 import json
 import os
 from datetime import datetime, timedelta, date
+import dateutil.parser
+from pytz import timezone
 from collections import defaultdict
 import pickle
 import pdb
@@ -267,7 +269,6 @@ def track_something():
     location = request.form.get("location")
     lat = None
     lon = None
-    pdb.set_trace()
 
     # If the user entered a datetime, use that. if not, use current time.
     time_input = request.form.get("datetime")
@@ -640,24 +641,69 @@ def show_class_picker():
 def get_yoga_classes():
     """Get JSON-formatted yoga classes for given day."""
 
-    start = datetime.now().isoformat()
-    end = (start + timedelta(days=1)).isoformat()
-    love_story = f"https://prod-swamis.mindbody.io/api/v1/search/class_times?sort=start_time&page%5Bsize%5D=100&page%5Bnumber%5D=1&filter%5Bstart_time_from%5D={start}&filter%5Bstart_time_to%5D={end}&filter%5Bdynamic_priceable%5D=any&filter%5Binclude_dynamic_pricing%5D=true&filter%5Blocation_slug%5D=love-story-yoga-mission-dolores"
-# .replace(" ","T").replace(":", "%3A")
-    class_data = requests.get(love_story).json()['data']
+    start_input = request.args.get("start")
+    end_input = request.args.get("end")
+    local = timezone("America/Los_Angeles")
+
+    if start_input:
+        start = datetime.strptime(start_input, "%Y-%m-%dT%H:%M") + timedelta(hours=7)
+    else:
+        start = datetime.now()
+
+    if end_input:
+        end = datetime.strptime(end_input, "%Y-%m-%dT%H:%M") + timedelta(hours=7)
+    else:
+        end = (start + timedelta(days=1))
+
+    mindbody = "https://prod-swamis.mindbody.io/api/v1/search/class_times?sort"\
+               "=start_time&page%5Bsize%5D=100&page%5Bnumber%5D=1&filter%5Bsta"\
+               f"rt_time_from%5D={start.isoformat() + 'Z'}&filter%5Bstart_time"\
+               f"_to%5D={end.isoformat() + 'Z'}&filter%5Bdynamic_priceable%5D="\
+               "any&filter%5Binclude_dynamic_pricing%5D=true&filter%5Blocation"\
+               "_slug%5D="
+    ls = "love-story-yoga-mission-dolores"
+    ytc = "yoga-tree-6"
+    yth = "yoga-tree-5"
+    ytp = "yoga-tree-3"
+    ytv = "yoga-tree-2"
+    ay = "astayoga-mission-dolores"
+    my = "mission-yoga-mission-district"
+
+    cp_hayes = "https://d2244u25cro8mt.cloudfront.net/locations/1419/73/classes/2019-09-04/2019-09-04"
+    cp_fremont = "https://d2244u25cro8mt.cloudfront.net/locations/1419/45/classes/2019-09-04/2019-09-04"
+
+    ls_data = requests.get(mindbody + ls).json()['data']
+    ytc_data = requests.get(mindbody + ytc).json()['data']
+    yth_data = requests.get(mindbody + yth).json()['data']
+    ytp_data = requests.get(mindbody + ytp).json()['data']
+    ytv_data = requests.get(mindbody + ytv).json()['data']
+    ay_data = requests.get(mindbody + ay).json()['data']
+    my_data = requests.get(mindbody + my).json()['data']
+
+    all_classes = ls_data + ytc_data + yth_data + ytp_data + ytv_data + ay_data\
+                  + my_data
     data_list = []
-    
-    for clas in class_data:
+
+    for clas in all_classes:
         info = clas["attributes"]
 
-        start = info["class_time_blackout_start_time"]
+        clas_start = dateutil.parser.parse(info["class_time_start_time"])\
+                     .astimezone(timezone('US/Pacific')).strftime("%-I:%M%p")
         title = info["course_name"]
         duration = info["class_time_duration"]
-        end = info["class_time_end_time"]
+        clas_end = dateutil.parser.parse(info["class_time_end_time"])\
+                   .astimezone(timezone('US/Pacific')).strftime("%-I:%M%p")
+        end_dt = datetime.strptime(info["class_time_end_time"][:-1],
+                                   "%Y-%m-%dT%H:%M:%S")
         instructor = info["instructor_name"]
+        studio = info["location_name"]
+        address = info["location_address"]
 
-        data_list.append({"studio": "Love Story Yoga", "title": title, "instructor": instructor,
-                          "start": start, "end": end, "duration": duration})
+        if end_dt <= end:
+            data_list.append({"studio": studio, "title": title,
+                              "instructor": instructor, "start": clas_start, 
+                              "end": clas_end, "duration": duration,
+                              "address": address})
 
     return json.dumps(data_list) 
 

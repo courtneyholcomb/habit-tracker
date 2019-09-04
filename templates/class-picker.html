@@ -6,46 +6,43 @@
 
 <!-- datetime input form (default now) -->
 <!-- submit button -->
-<form action="/yoga-classes">
-    <label>Avalaiability start: <input type="datetime-local" name="start" id="start" required></label>
+<form action="/yoga-classes" id="yoga-form">
+    <label>Avalaiability start: <input type="datetime-local" name="start" id="start" value="start" required></label>
     <br>
-    <label>Avalaiability end: <input type="datetime-local" name="end" id="end"></label>
+    <label>Avalaiability end: <input type="datetime-local" name="end" id="end" value="end"></label>
     <br>
     <input type="submit" value="Get Classes" id="submit-button">
 </form>
+<br><br>
 <div id="yoga-classes"></div>
-<!-- list of classes populates via ajax when submitted-->
-
-
 
 
 <script type="text/javascript">
 
 function getClasses() {
 
-    formData = {
+    let formData = {
         start: $("#start").val(),
         end: $("#end").val()
     };
 
     $.get("/yoga-classes", formData, function (response) {
         let data = $.parseJSON(response);
-        classes = ``
+        let classes = ``;
+
         for (let clas of data) {
             classes += `${clas.studio}: ${clas.instructor} / ${clas.title} / ${clas.start} – ${clas.end} (${clas.duration} min)<br>`;  
         }
+
         $("#yoga-classes").html(classes);
     });
 }
-    
-function refreshClasses(event) {
+
+window.onload = getClasses();
+$("#yoga-form input[type='submit']").on("click", function (event) {
     event.preventDefault();
-
     getClasses();
-}
-
-window.onload = getClasses()
-$("#new-form input[type='submit']").on("click", refreshClasses);
+});
 
 </script>
 
