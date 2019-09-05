@@ -5,6 +5,7 @@ from PyQt5.QtCore import QUrl
 from bs4 import BeautifulSoup
 import urllib.request
 from datetime import datetime, timedelta
+import dateutil.parser
 
 
 class Page(QWebEnginePage):
@@ -49,7 +50,7 @@ def get_ritual_classes():#start_dt, end_dt):
 
         page = Page(f"https://reserve.ritualhotyoga.com/reserve/index.cfm?action=Reserve.chooseClass&site=2&wk={input_wk}")
 
-        soup = BeautifulSoup(page.html, 'lxml')
+        soup = BeautifulSoup(page.html, "html.parser")
         classes = soup.find('td', class_=f"day{input_wkday}").find_all("div", class_="scheduleBlock")
         for clas in classes:
             instructor = clas.find_all("span", class_="scheduleInstruc")[0].text.strip()
@@ -57,7 +58,8 @@ def get_ritual_classes():#start_dt, end_dt):
             start = clas.find_all("span", class_="scheduleTime")[0].find(text=True).strip()
             duration = clas.find_all("span", class_="classlength")[0].text.strip()
             # WIP - convert start time from string to approp formatted datetime object
-            end = start.strptime() + timedelta(minutes=int(duration[:-4]))
+            # end = (str(input_date) + start).strftime() + timedelta(minutes=int(duration[:-4]))
+            end = (dateutil.parser.parse(start) + timedelta(minutes=int(duration[:-4]))).strftime("%-I:%M %p")
             all_classes.append({"studio": "Ritual FiDi", "title": title,
                                 "instructor": instructor, "start": start, 
                                 "end": end, "duration": duration,
