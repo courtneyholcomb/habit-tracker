@@ -19,6 +19,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 from models import db, User, Habit, HabitEvent, Influence, InfluenceEvent, Symptom, SymptomEvent
+from scrape import get_ritual_classes
 
 
 app = Flask(__name__)
@@ -733,7 +734,7 @@ def get_yoga_classes():
                               "address": address})
 
     ### Get info for Ritual classes
-
+    data_list.extend(get_ritual_classes(start, end))
 
     return json.dumps(data_list) 
 
