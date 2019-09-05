@@ -3,9 +3,9 @@
 import requests
 import json
 import os
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import dateutil.parser
-from pytz import timezone
+import pytz
 from collections import defaultdict
 import pickle
 import pdb
@@ -643,67 +643,86 @@ def get_yoga_classes():
 
     start_input = request.args.get("start")
     end_input = request.args.get("end")
-    local = timezone("America/Los_Angeles")
+    pst = pytz.timezone('US/Pacific')
 
+    # if no time entered, start = now and end = 12 hours from now
     if start_input:
-        start = datetime.strptime(start_input, "%Y-%m-%dT%H:%M") + timedelta(hours=7)
+        start = datetime.strptime(start_input, "%Y-%m-%dT%H:%M")
     else:
-        start = datetime.now()
+        start = datetime.now(timezone.utc)
 
     if end_input:
-        end = datetime.strptime(end_input, "%Y-%m-%dT%H:%M") + timedelta(hours=7)
+        end = datetime.strptime(end_input, "%Y-%m-%dT%H:%M")
     else:
-        end = (start + timedelta(days=1))
+        end = (start + timedelta(hours=12))
 
+    ### Get info for Mindbody classes
     mindbody = "https://prod-swamis.mindbody.io/api/v1/search/class_times?sort"\
                "=start_time&page%5Bsize%5D=100&page%5Bnumber%5D=1&filter%5Bsta"\
                f"rt_time_from%5D={start.isoformat() + 'Z'}&filter%5Bstart_time"\
                f"_to%5D={end.isoformat() + 'Z'}&filter%5Bdynamic_priceable%5D="\
                "any&filter%5Binclude_dynamic_pricing%5D=true&filter%5Blocation"\
                "_slug%5D="
-    ls = "love-story-yoga-mission-dolores"
-    ytc = "yoga-tree-6"
-    yth = "yoga-tree-5"
-    ytp = "yoga-tree-3"
-    ytv = "yoga-tree-2"
-    ay = "astayoga-mission-dolores"
-    my = "mission-yoga-mission-district"
+    mb_locations = ["love-story-yoga-mission-dolores", "yoga-tree-6", 
+                    "yoga-tree-5", "yoga-tree-3", "yoga-tree-2",
+                    "astayoga-mission-dolores", "mission-yoga-mission-district"]
 
-    cp_hayes = "https://d2244u25cro8mt.cloudfront.net/locations/1419/73/classes/2019-09-04/2019-09-04"
-    cp_fremont = "https://d2244u25cro8mt.cloudfront.net/locations/1419/45/classes/2019-09-04/2019-09-04"
+    # get class data from all mindbody locations
+    mb_classes = []
+    for location in mb_locations:
+        mb_classes.extend(requests.get(mindbody + location).json()['data'])
 
-    ls_data = requests.get(mindbody + ls).json()['data']
-    ytc_data = requests.get(mindbody + ytc).json()['data']
-    yth_data = requests.get(mindbody + yth).json()['data']
-    ytp_data = requests.get(mindbody + ytp).json()['data']
-    ytv_data = requests.get(mindbody + ytv).json()['data']
-    ay_data = requests.get(mindbody + ay).json()['data']
-    my_data = requests.get(mindbody + my).json()['data']
-
-    all_classes = ls_data + ytc_data + yth_data + ytp_data + ytv_data + ay_data\
-                  + my_data
     data_list = []
-
-    for clas in all_classes:
+    # extract class info from json response
+    for clas in mb_classes:
         info = clas["attributes"]
-
-        clas_start = dateutil.parser.parse(info["class_time_start_time"])\
-                     .astimezone(timezone('US/Pacific')).strftime("%-I:%M%p")
-        title = info["course_name"]
-        duration = info["class_time_duration"]
-        clas_end = dateutil.parser.parse(info["class_time_end_time"])\
-                   .astimezone(timezone('US/Pacific')).strftime("%-I:%M%p")
-        end_dt = datetime.strptime(info["class_time_end_time"][:-1],
-                                   "%Y-%m-%dT%H:%M:%S")
-        instructor = info["instructor_name"]
         studio = info["location_name"]
+        title = info["course_name"]
+        instructor = info["instructor_name"]
+        clas_start = dateutil.parser.parse(info["class_time_start_time"])
+        clas_end = dateutil.parser.parse(info["class_time_end_time"])
+        duration = info["class_time_duration"]
         address = info["location_address"]
 
-        if end_dt <= end:
+        # add info from each class in time range to data_list
+        if clas_end <= end:
             data_list.append({"studio": studio, "title": title,
-                              "instructor": instructor, "start": clas_start, 
-                              "end": clas_end, "duration": duration,
-                              "address": address})
+              "instructor": instructor, "duration": duration,
+              "start": clas_start.astimezone(pst).strftime("%-I:%M%p"), 
+              "end": clas_end.astimezone(pst).strftime("%-I:%M%p"), 
+              "address": address})
+
+    ### Get info for CorePower classes
+    cp_tz_start = start - timedelta(hours=7)
+    cp_tz_end = end - timedelta(hours=7)
+
+    # get class data from all corepower locations
+    cp_start = "https://d2244u25cro8mt.cloudfront.net/locations/1419/"
+    cp_locations = ["73", "45", "65", "67"]
+    cp_end = f"/classes/{cp_tz_start.date()}/{cp_tz_end.date()}"
+
+    cp_classes = []
+    for location in cp_locations:
+        cp_classes.extend(requests.get(cp_start + location + cp_end).json())
+
+    # extract class info from json response
+    for clas in cp_classes:
+        title = clas["name"]
+        clas_start = dateutil.parser.parse(clas["start_date_time"])
+        start_format = clas_start.strftime("%-I:%M%p")
+        clas_end = dateutil.parser.parse(clas["end_date_time"])
+        end_format = clas_end.strftime("%-I:%M%p")
+        instructor = clas["teacher"]["name"]
+        studio = clas["location"]["name"][5:]
+
+        # add info from each class in time range to data_list
+        if clas_start >= cp_tz_start and clas_end <= cp_tz_end:
+            data_list.append({"studio": "CorePower" + studio, "title": title,
+                              "instructor": instructor, "start": start_format, 
+                              "end": end_format})
+
+    ### Get info for Ritual classes
+    
 
     return json.dumps(data_list) 
 

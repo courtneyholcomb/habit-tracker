@@ -27,7 +27,7 @@ class Page(QWebEnginePage):
 
 
 def get_love_story_classes():
-    page = Page("https://mindbody.io/fitness/studios/love-story-yoga-mission-dolores")
+    page = Page("https://reserve.ritualhotyoga.com/reserve/index.cfm?action=Reserve.chooseClass&site=2")
     soup = BeautifulSoup(page.html, 'lxml')
     classes = soup.find_all('div', class_="columns ClassTimeScheduleItemMobile_separator__T8qcO")
     for clas in classes:
