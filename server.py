@@ -701,6 +701,10 @@ def get_yoga_classes():
     cp_locations = ["73", "45", "65", "67"]
     cp_end = f"/classes/{cp_tz_start.date()}/{cp_tz_end.date()}"
 
+    cp_addresses = {"Hayes Valley": "150 Van Ness Ave Suite A", "Fremont": 
+                    "215 Fremont Street", "FIDI": "241 California Street",
+                    "Duboce": "100 Church Street"}
+
     cp_classes = []
     for location in cp_locations:
         cp_classes.extend(requests.get(cp_start + location + cp_end).json())
@@ -713,16 +717,23 @@ def get_yoga_classes():
         clas_end = dateutil.parser.parse(clas["end_date_time"])
         end_format = clas_end.strftime("%-I:%M%p")
         instructor = clas["teacher"]["name"]
-        studio = clas["location"]["name"][5:]
+        studio = clas["location"]["name"][6:]
+
+        duration = (clas_end - clas_start).total_seconds() / 60
+        address = cp_addresses[studio].replace(" ", "+")
+        gmaps_token = os.environ.get("GMAPS_TOKEN")
+        gmaps_url = f"https://maps.googleapis.com/maps/api/directions/json?origin=Disneyland&destination={address}&key={gmaps_token}"
 
         # add info from each class in time range to data_list
-        if clas_start >= cp_tz_start and clas_end <= cp_tz_end:
-            data_list.append({"studio": "CorePower" + studio, "title": title,
+        if clas_start >= cp_tz_start and clas_end <= cp_tz_end\
+            and not "Sculpt" in title:
+            data_list.append({"studio": "CorePower " + studio, "title": title,
                               "instructor": instructor, "start": start_format, 
-                              "end": end_format})
+                              "end": end_format, "duration": duration,
+                              "address": address})
 
     ### Get info for Ritual classes
-    
+
 
     return json.dumps(data_list) 
 

@@ -31,7 +31,7 @@ function getClasses() {
         let classes = ``;
 
         for (let clas of data) {
-            classes += `${clas.studio}: ${clas.instructor} / ${clas.title} / ${clas.start} – ${clas.end} (${clas.duration} min)<br>`;  
+            classes += `${clas.studio}: ${clas.instructor} / ${clas.title} / ${clas.start} – ${clas.end} (${clas.duration} min), ${clas.address}<br>`;  
         }
 
         $("#yoga-classes").html(classes);
