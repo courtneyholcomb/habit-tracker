@@ -42,6 +42,12 @@ class Habit(db.Model):
 
         return f"<Habit {self.id} {self.label} {self.user.username}>"
 
+    def to_json(self):
+        """Get Habit details in JSON format."""
+
+        return {"id": self.id, "label": self.label, "unit": self.unit,
+                "user_id": self.user_id}
+
 
 class HabitEvent(db.Model): # rename: habit occurrence
     """An instance of a Habit completed by a User."""
@@ -79,6 +85,12 @@ class Influence(db.Model):
         """Show Influence id, label, and associated User's username."""
 
         return f"<Influence {self.id} {self.label} {self.user.username}>"
+
+    def to_json(self):
+        """Get Influence details in JSON format."""
+
+        return {"id": self.id, "label": self.label, "scale": self.scale,
+                "user_id": self.user_id}
 
 
 class InfluenceEvent(db.Model):
@@ -119,6 +131,12 @@ class Symptom(db.Model):
         """Show Symptom id, label, and associated User's username."""
 
         return f"<Symptom {self.id} {self.label} {self.user.username}>"
+
+    def to_json(self):
+        """Get Symptom details in JSON format."""
+
+        return {"id": self.id, "label": self.label, "scale": self.scale,
+                "user_id": self.user_id}
 
 
 class SymptomEvent(db.Model):

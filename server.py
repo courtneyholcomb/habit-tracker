@@ -153,15 +153,11 @@ def get_user_event_types():
 
     user = get_user()
 
-    habits = [{"id": habit.id, "label": habit.label, "unit": habit.unit}
-              for habit in Habit.query.filter_by(user_id=user.id).all()]
-    influences = [{"id": infl.id, "label": infl.label, "scale": infl.scale}
-                  for infl in Influence.query.filter_by(user_id=user.id).all()]
-    symptoms = [{"id": symp.id, "label": symp.label, "scale": symp.scale}
-                for symp in Symptom.query.filter_by(user_id=user.id).all()]
-
-    return json.dumps({"habits": habits, "influences": influences,
-        "symptoms": symptoms})
+    return json.dumps({
+        "habits": [habit.to_json() for habit in user.habits],
+        "influences": [influence.to_json() for influence in user.influences],
+        "symptoms": [symptom.to_json() for symptom in user.symptoms]
+    })
 
 
 def validate_new_event_type(label):
