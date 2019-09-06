@@ -659,9 +659,10 @@ def get_yoga_classes():
         end = (start + timedelta(hours=12))
 
     gmaps_token = os.environ.get("GMAPS_TOKEN")
-    location = request.form.get("location")
-    gm_url_1 = "https://maps.googleapis.com/maps/api/directions/json?origin="\
-               f"{location}&destination="
+    # location = request.form.get("location")
+    location = "37.7886999,-122.4115507"
+    gm_url_1 = "https://maps.googleapis.com/maps/api/directions/json?"\
+               f"mode=transit&origin={location}&destination="
 
     ### Get info for Mindbody classes
     mindbody = "https://prod-swamis.mindbody.io/api/v1/search/class_times?sort"\
@@ -713,7 +714,7 @@ def get_yoga_classes():
 
     cp_addresses = {"Hayes Valley": "150 Van Ness Ave Suite A", "Fremont": 
                     "215 Fremont Street", "FIDI": "241 California Street",
-                    "Duboce": "100 Church Street"}
+                    "Duboce": "100 Church Street, SF"}
 
     cp_classes = []
     for location in cp_locations:
@@ -732,8 +733,8 @@ def get_yoga_classes():
         address = cp_addresses[studio].replace(" ", "+")
         gm_url_2 = f"{address}&key={gmaps_token}"
 
-        # distance = requests.get(gm_url_1 + gm_url_2).json()["routes"][0]["legs"][0]["duration"]["text"]
-        
+        distance = requests.get(gm_url_1 + gm_url_2).json()["routes"][0]["legs"][0]["duration"]["text"]
+
         # add info from each class in time range to data_list
         if clas_start >= cp_tz_start and clas_end <= cp_tz_end\
             and not "Sculpt" in title:
@@ -745,7 +746,6 @@ def get_yoga_classes():
     ### Get info for Ritual classes
     data_list.extend(get_ritual_classes(start, end))
     
-
     return json.dumps(data_list) 
 
 

@@ -1,32 +1,7 @@
-# import sys
-# from PyQt5.QtWebEngineWidgets import QWebEnginePage
-# from PyQt5.QtWidgets import QApplication
-# from PyQt5.QtCore import QUrl
 from bs4 import BeautifulSoup
 import requests
-# import urllib.request
 from datetime import datetime, timedelta
 import dateutil.parser
-
-
-# class Page(QWebEnginePage):
-
-#     def __init__(self, url):
-#         self.app = QApplication(sys.argv)
-#         QWebEnginePage.__init__(self)
-#         self.html = ""
-#         self.loadFinished.connect(self.on_page_load)
-#         self.load(QUrl(url))
-#         self.app.exec_()
-
-#     def on_page_load(self):
-#         self.html = self.toHtml(self.Callable)
-#         print('Load finished')
-
-#     def Callable(self, html_str):
-#         self.html = html_str
-#         self.app.quit()
-
 
 
 def get_ritual_classes(start_dt, end_dt):
@@ -52,7 +27,6 @@ def get_ritual_classes(start_dt, end_dt):
         soup = BeautifulSoup(info.content, "lxml")
         classes = soup.find('td', class_=f"day{input_wkday}").find_all("div", class_="scheduleBlock")
 
-        # print(classes)
         for clas in classes:
             if not "cancelled" in clas.text:
                 instructor = clas.find_all("span", class_="scheduleInstruc")[0].text.strip()
