@@ -61,18 +61,15 @@ def validate_login():
     username = request.form.get("username")
     password = request.form.get("password")
 
-    try:
-        user = db.session.query(User).filter(User.username == username).one()
+    user = db.session.query(User).filter(User.username == username).first()
 
-        if not bcrypt.check_password_hash(user.password, password):
-            return "Incorrect username or password."
-
+    if user and bcrypt.check_password_hash(user.password, password):
         session["username"] = username
         session["user_id"] = user.id
         flash("Login successful")
         return "OK", 200
 
-    except:
+    else:
         return "Incorrect username or password."    
 
 
@@ -93,17 +90,11 @@ def register():
     confpass = request.form.get("confpass")
 
     ### Check that email & username are available
-    try:
-        db.session.query(User).filter_by(email=email).one()
+    if db.session.query(User).filter_by(email=email).first():
         return "There is already an account associated with that email."
-    except:
-        pass
 
-    try:
-        db.session.query(User).filter_by(username=username).one()
+    if db.session.query(User).filter_by(username=username).first():
         return "Username already taken."
-    except:
-        pass
 
     ### Validate password
     if len(password) < 8:
@@ -173,26 +164,17 @@ def validate_new_event_type(label):
 
     user = get_user()
 
-    try:
-        if db.session.query(Habit).filter(Habit.label == label,
-                                          Habit.user == user).all():
-            return "You already have a habit with that title."
-    except:
-        pass
+    if db.session.query(Habit).filter(Habit.label == label,
+                                      Habit.user == user).first():
+        return "You already have a habit with that title."
 
-    try:
-        if db.session.query(Influence).filter(Influence.label == label,
-                                              Influence.user == user).all():
-            return "You already have an influence with that title."
-    except:
-            pass
+    if db.session.query(Influence).filter(Influence.label == label,
+                                          Influence.user == user).first():
+        return "You already have an influence with that title."
 
-    try:
-        if db.session.query(Symptom).filter(Symptom.label == label,
-                                            Symptom.user == user).all():
-            return "You already have a symptom with that title."
-    except:
-        return None
+    if db.session.query(Symptom).filter(Symptom.label == label,
+                                        Symptom.user == user).first():
+        return "You already have a symptom with that title."
 
 
 @app.route("/new", methods=["POST"])
@@ -316,10 +298,12 @@ def track_current_weather(lat, lon):
 def ensure_tracking_infl(label, scale):
     """If user doesn't track influence yet, add it."""
 
-    try:
-        return Influence.query.filter_by(label=label).one()
+    infl = Influence.query.filter_by(label=label).first()
 
-    except:
+    if infl:
+        return infl
+
+    else:
         new_infl = Influence(label=label, scale=scale, user_id=user_id)
         db.session.add(new_infl)
         db.session.commit()
@@ -657,6 +641,11 @@ def get_yoga_classes():
     else:
         end = (start + timedelta(hours=12))
 
+    gmaps_token = os.environ.get("GMAPS_TOKEN")
+    location = request.form.get("location")
+    gm_url_1 = "https://maps.googleapis.com/maps/api/directions/json?origin="\
+               f"{location}&destination="
+
     ### Get info for Mindbody classes
     mindbody = "https://prod-swamis.mindbody.io/api/v1/search/class_times?sort"\
                "=start_time&page%5Bsize%5D=100&page%5Bnumber%5D=1&filter%5Bsta"\
@@ -684,6 +673,9 @@ def get_yoga_classes():
         clas_end = dateutil.parser.parse(info["class_time_end_time"])
         duration = info["class_time_duration"]
         address = info["location_address"]
+        gm_url_2 = f"{address}&key={gmaps_token}"
+
+        distance = requests.get(gm_url_1 + gm_url_2).json()
 
         # add info from each class in time range to data_list
         if clas_end <= end:
@@ -691,7 +683,7 @@ def get_yoga_classes():
               "instructor": instructor, "duration": duration,
               "start": clas_start.astimezone(pst).strftime("%-I:%M%p"), 
               "end": clas_end.astimezone(pst).strftime("%-I:%M%p"), 
-              "address": address})
+              "address": address, "distance": distance})
 
     ### Get info for CorePower classes
     cp_tz_start = start - timedelta(hours=7)
@@ -719,12 +711,12 @@ def get_yoga_classes():
         end_format = clas_end.strftime("%-I:%M%p")
         instructor = clas["teacher"]["name"]
         studio = clas["location"]["name"][6:]
-
         duration = (clas_end - clas_start).total_seconds() / 60
         address = cp_addresses[studio].replace(" ", "+")
-        gmaps_token = os.environ.get("GMAPS_TOKEN")
-        gmaps_url = f"https://maps.googleapis.com/maps/api/directions/json?origin=Disneyland&destination={address}&key={gmaps_token}"
+        gm_url_2 = f"{address}&key={gmaps_token}"
 
+        # distance = requests.get(gm_url_1 + gm_url_2).json()["routes"][0]["legs"][0]["duration"]["text"]
+        
         # add info from each class in time range to data_list
         if clas_start >= cp_tz_start and clas_end <= cp_tz_end\
             and not "Sculpt" in title:
@@ -735,6 +727,7 @@ def get_yoga_classes():
 
     ### Get info for Ritual classes
     data_list.extend(get_ritual_classes(start, end))
+    
 
     return json.dumps(data_list) 
 
