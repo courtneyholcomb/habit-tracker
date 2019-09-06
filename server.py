@@ -109,7 +109,12 @@ def register():
         db.session.commit()
 
         flash("Registration successful")
-        validate_login()
+
+        # Log the user in
+        session["username"] = username
+        session["user_id"] = user.id
+        flash("Login successful")
+
         return "OK", 200
 
 
@@ -317,7 +322,6 @@ def enable_gcal():
 
     user = get_user()
     creds = user.gcal_token
-    print(f"creds={creds}")
 
     # If no valid creds, prompt login.
     if not creds or not creds.valid:
@@ -352,10 +356,12 @@ def get_gcal_events():
     events = []
     
     for calendar in calendars:
-        events_result = gcal_info.events().list(calendarId=calendar['id'],
-                                        timeMin=dt_start, timeMax=dt_end,
-                                        singleEvents=True,
-                                        orderBy='startTime').execute()
+        events_result = gcal_info.events().list(
+            calendarId=calendar['id'],
+            timeMin=dt_start, timeMax=dt_end,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
         events += events_result["items"]
 
     # If any GCal events in time range have habit labels in title, track them.
@@ -371,15 +377,17 @@ def get_gcal_events():
             if habit.label.lower() in title_words:
 
                 # Check if event is already tracked
-                duplicates = db.session.query(HabitEvent)\
+                duplicate = db.session.query(HabitEvent)\
                              .filter(HabitEvent.user_id == user.id,
                                      HabitEvent.timestamp == start,
-                                     HabitEvent.habit_id == habit.id).all()
+                                     HabitEvent.habit_id == habit.id).first()
 
-                if not duplicates:
+                if not duplicate:
                     create_event("habit", user.id, habit.id, 1, start)
-                    events_tracked += f"Habit: {habit.label}, "\
-                                      f"Event: {title} {start}\n"
+                    events_tracked += (
+                        f"Habit: {habit.label}, "
+                        f"Event: {title} {start}\n"
+                    )
 
     return events_tracked
 
@@ -484,8 +492,17 @@ def get_line_chart_data():
     event_infos = get_event_infos(start, end)
     labels_types = list({(info[0].label, info[3]) for info in event_infos})
 
-    graph_colors = ['#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236', 
-                  '#166a8f', '#00a950', '#58595b', '#8549ba']
+    graph_colors = [
+        '#4dc9f6', # light blue
+        '#f67019', # orange
+        '#f53794', # pink
+        '#537bc4', # periwinkle
+        '#acc236', # light green
+        '#166a8f', # grey blue
+        '#00a950', # kelly green
+        '#58595b', # grey
+        '#8549ba' # purple
+    ]
 
     datasets = []
 
