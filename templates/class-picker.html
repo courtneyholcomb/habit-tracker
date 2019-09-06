@@ -4,23 +4,33 @@
 
 {% block body %}
 
-<!-- datetime input form (default now) -->
-<!-- submit button -->
+<h2>Find a Yoga Class</h2>
 <form action="/yoga-classes" id="yoga-form">
-    <label>Avalaiability start: <input type="datetime-local" name="start" id="start" value="start" required></label>
+    <label>Date: 
+        <input type="date" name="date-input" id="date-input">
+    </label>
     <br>
-    <label>Avalaiability end: <input type="datetime-local" name="end" id="end" value="end"></label>
+    <label>Availability start: 
+        <input type="time" name="start" id="start" value="start" required>
+    </label>
     <br>
-    <label>
-        <button class="location-button" id="location-button">Get My Location</button>
+    <label>Availability end: 
+        <input type="time" name="end" id="end" value="end" required>
+    </label>
+    <br>
+    <label>Location: 
         <input type="text" name="location" id="location">
     </label>
+    <button class="location-button" id="location-button">Get My Location</button>
     <br>
     <input type="submit" value="Get Classes" id="submit-button">
 </form>
-<br><br>
-<div id="yoga-classes"></div>
-
+<br>
+If form is left blank, default time range will be from now to six hours from
+now. If no location is entered, travel time will not be calculated.
+<br>
+<br>
+<div id="yoga-classes">Calculating best classes...</div>
 
 <script type="text/javascript">
 
@@ -39,18 +49,27 @@ $("#location-button").on('click', getLocation);
 
 function getClasses() {
 
+    $("#yoga-classes").html("Searching for best classes...");
+
     let formData = {
+        dateInput: $("#date-input").val(),
         start: $("#start").val(),
-        end: $("#end").val()
+        end: $("#end").val(),
+        location: $("#location").val()
     };
 
     $.get("/yoga-classes", formData, function (response) {
         let data = $.parseJSON(response);
-        let classes = ``;
+        let classes = `<table><tr><th>Studio</th>
+            <th>Instructor</th><th>Class Title</th><th>Start Time</th>
+            <th>Duration</th><th>Travel Time</th></tr>`;
 
         for (let clas of data) {
-            classes += `${clas.studio}: ${clas.instructor} / ${clas.title} / ${clas.start} – ${clas.end} (${clas.duration} min), ${clas.address}<br>`;  
+            classes += `<tr><td>${clas.studio}</td><td>${clas.instructor}</td>
+                <td>${clas.title}</td><td>${clas.start}</td>
+                <td>${clas.duration} min</td><td>${clas.travel}</td></tr>`;  
         }
+        classes += `</table>`;
 
         $("#yoga-classes").html(classes);
     });

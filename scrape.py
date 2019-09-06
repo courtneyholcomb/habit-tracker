@@ -2,42 +2,57 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime, timedelta
 import dateutil.parser
+import pytz
 
 
-def get_ritual_classes(start_dt, end_dt):
+def get_ritual_classes(start, end):
     """Get a list of Ritual classes within given date range."""
 
-    # Get today's weekday, starting with Sunday = 0
-    start_date = start_dt.date()
-    end_date = end_dt.date()
+    pst = pytz.timezone('US/Pacific')
+    input_date = start.astimezone(pst).date()
 
-    num_days = (end_date - start_date).days + 1
-    date_range = [(start_date + timedelta(days=i)) for i in range(num_days)]
+    # Get today's weekday and input's weekday, starting with Sunday = 0
+    # Use to create correct request URL & find correct html block
+    today = datetime.now().date()
+    today_wkday = today.isoweekday() % 7
+    input_wkday = input_date.isoweekday() % 7
+    delta = (input_date - today).days
+    input_wk = (today_wkday + delta - input_wkday) / 7
+
+    info = requests.get("https://reserve.ritualhotyoga.com/reserve/" \
+                        "index.cfm?action=Reserve.chooseClass&" \
+                        f"site=1&wk={input_wk}")
+    soup = BeautifulSoup(info.content, "lxml")
+    day_tds = soup.find('td', class_=f"day{input_wkday}")
+    schedule_blocks = day_tds.find_all("div", class_="scheduleBlock")
 
     all_classes = []
-    for input_date in date_range:
-        today = datetime.now().date()
-        today_wkday = today.isoweekday() % 7
-        input_wkday = input_date.isoweekday() % 7
+    for clas in schedule_blocks:
 
-        delta = (input_date - today).days
-        input_wk = (today_wkday + delta - input_wkday) / 7
+        # Eliminate canceled classes
+        if not "cancelled" in clas.text:
+            # Get start time & duration from scraped info
+            start_block = clas.find_all("span", class_="scheduleTime")[0]
+            clas_start = start_block.find(text=True).strip()
+            duration_block = clas.find_all("span", class_="classlength")[0]
+            duration = int(duration_block.text.strip()[:-4])
+            duration_td = timedelta(minutes=duration)
 
-        info = requests.get(f"https://reserve.ritualhotyoga.com/reserve/index.cfm?action=Reserve.chooseClass&site=1&wk={input_wk}")
-        soup = BeautifulSoup(info.content, "lxml")
-        classes = soup.find('td', class_=f"day{input_wkday}").find_all("div", class_="scheduleBlock")
+            # Calculate end time
+            end_block = (dateutil.parser.parse(clas_start) + duration_td)
+            clas_end = end_block.strftime("%-I:%M %p")
 
-        for clas in classes:
-            if not "cancelled" in clas.text:
-                instructor = clas.find_all("span", class_="scheduleInstruc")[0].text.strip()
-                title = clas.find_all("span", class_="scheduleClass")[0].text.strip()
-                start = clas.find_all("span", class_="scheduleTime")[0].find(text=True).strip()
-                duration = clas.find_all("span", class_="classlength")[0].text.strip()
-                end = (dateutil.parser.parse(start) + timedelta(minutes=int(duration[:-4]))).strftime("%-I:%M %p")
-                all_classes.append({"studio": "Ritual", "title": title,
-                                    "instructor": instructor, "start": start, 
-                                    "end": end, "duration": duration,
-                                    "address": "49 Kearny St"})
+            # Get instructor & title text
+            instructor = clas.find_all("span", class_="scheduleInstruc")[0]\
+                         .text.strip()
+            title = clas.find_all("span", class_="scheduleClass")[0] \
+                    .text.strip()
+            
+            # Add each class info to list
+            all_classes.append({"studio": "Ritual", "title": title,
+                "instructor": instructor, "start": clas_start,
+                "end": clas_end, "duration": duration,
+                "address": "1122 Howard St, SF"})
 
     return all_classes
 
