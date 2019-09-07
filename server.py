@@ -112,7 +112,7 @@ def register():
 
         # Log the user in
         session["username"] = username
-        session["user_id"] = user.id
+        session["user_id"] = new_user.id
         flash("Login successful")
 
         return "OK", 200
@@ -644,7 +644,6 @@ def get_yoga_classes():
     end_input = request.args.get("end")
     pst = pytz.timezone('US/Pacific')
     user_location = request.args.get("location")
-    print(user_location)
     gmaps_token = os.environ.get("GMAPS_TOKEN")
     gm_url_1 = "https://maps.googleapis.com/maps/api/directions/json?"\
                f"mode=transit&origin={user_location}&destination="
@@ -700,14 +699,13 @@ def get_yoga_classes():
             clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
                          .astimezone(pytz.utc)
             travel_dt = timedelta(minutes=int(travel_time[:-5]))
-            # print(start + travel_dt, clas_start, clas_end, address)
             if (start + travel_dt) < clas_start:
 
                 # For all classes that meet requirements, get remaining info
                 studio = info["location_name"]
                 instructor = info["instructor_name"]
                 duration = info["class_time_duration"]
-                # print(studio, instructor)
+
                 # Add info from each class in time range to data_list
                 data_list.append({"studio": studio, "title": title,
                     "instructor": instructor, "duration": duration,
@@ -798,7 +796,7 @@ def get_yoga_classes():
             # Eliminate classes user can't travel to in time
             travel_td = timedelta(minutes=int(travel_time[:-5]))
             if start + travel_td < start_dt:
-                print
+
                 # Add travel time to class info + add info to data list
                 ritual_class["travel"] = travel_time
                 data_list.append(ritual_class)

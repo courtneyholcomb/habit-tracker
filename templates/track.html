@@ -18,14 +18,17 @@
 <br>
 <h4>Pull events from GCal:</h4>
 Click the button below to automatically track any events on your calendar with
-the title of your habits in the name.
+the title of your habits in the name. You will be prompted to log into GCal if
+you haven't already.
+<br>
+<br>
 <form>
 Time frame to check (default is past week):
 <br>
 <input type="date" name="start-date" id="start-date" required> to
 <input type="date" name="end-date" id="end-date" required>
 <br>
-<input type="submit" id="gcal-habits-button" value="Get Events"></button>
+<input type="submit" id="gcal-habits-button" value="Get Events">
 </form>
 <br>
 
@@ -34,17 +37,16 @@ Time frame to check (default is past week):
 
 let eventInput = $("#event-type")
 
-
 // this will populate the dropdown menus based on user's tracked event types
 function createDropdowns () {
     
     $.get("/user-event-types", function (response) {
-
         let data = $.parseJSON(response);
 
         // based on event type user chooses, fill in dropdowns
         // if user has nothing added for that type, link to add new page
         $("#type-dependent").html(function () {
+
             let type = eventInput.val();
             let capType = type.charAt(0).toUpperCase() + type.slice(1);
             let start = `<label>${capType}: <select name="type-id" id="type-id"
@@ -54,10 +56,10 @@ function createDropdowns () {
             let end = `<input type="number" name="num" id="num" required></label>
                        <br><label>Date/Time (optional):
                        <input type="datetime-local" name="datetime" id="datetime">
-                       </label><br><label>
-                       <button class="location-button" id="location-button">Get My Location</button>
-                       <input type="text" name="location" id="location"></label>
-                       <br><input type="submit" id="submut-button">`;
+                       </label><br><label>Location: 
+                        <input type="text" name="location" id="location"></label>
+                        <button class="location-button" id="location-button">Get My Location</button>
+                       <br><input type="submit" id="submit-button">`;
 
             if (type == "habit") {
                 if (data.habits != false) {
@@ -65,9 +67,7 @@ function createDropdowns () {
                         options += `<option value=${habit.id}>${habit.label}</option>`;
                     };
                     measurement += `</select></label><br><label>Units: `;
-
                     return `${start} ${options} ${measurement} ${end}`;
-
                 } else {
                     return `<a href="/new">Add some habits to track here!</a>`;
                 }
@@ -79,9 +79,7 @@ function createDropdowns () {
                                     </option>`;
                     };
                     measurement += `</select></label><br><label>Intensity: `;
-
                     return `${start} ${options} ${measurement} ${end}`;
-
                 } else {
                     return `<a href="/new">Add some influences to track here!</a>`;
                 }
@@ -101,6 +99,7 @@ function createDropdowns () {
     });
 }
 
+
 // populate dropdowns when page loads & when user chooses new event type
 $(window).on("load", createDropdowns);
 eventInput.on("change", createDropdowns);
@@ -109,6 +108,7 @@ eventInput.on("change", createDropdowns);
 // this will get the user's location from the browser
 function getLocation(event) {
     event.preventDefault();
+
     navigator.geolocation.getCurrentPosition(function (position) {
             $("#location").val(`${position.coords.latitude},${position.coords.longitude}`);
         });
@@ -134,15 +134,15 @@ function trackEvent(event) {
     $.post("/track", inputs, function (response) {
         if (response.includes("tracked successfully")) {
             alert(response);
+
             $("#track-form")[0].reset();
-            createDropdowns()
+            createDropdowns();
         }
     });
-
 }
 
 // track event when user submits form
-$('#track-form input[type="submit"]').on('click', trackEvent);
+$("#submit-button").on('click', trackEvent);
 
 
 // this will enable GCal and track events from selected time period
@@ -164,9 +164,9 @@ function trackGcalHabits(event) {
     });
 }
 
+
 // track GCal events when user clicks button 
 $("#gcal-habits-button").on('click', trackGcalHabits);
-
 </script>
 {% endblock %}
 
