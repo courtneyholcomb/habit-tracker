@@ -233,7 +233,7 @@ def create_event(evt_type, user_id, type_id, num,
     elif evt_type == "influence":
         new_event = InfluenceEvent(user_id=user_id, influence_id=type_id, 
                                    intensity=num, timestamp=timestamp,
-                                   latitude=lat, longitude=longitude)
+                                   latitude=lat, longitude=lon)
     elif evt_type == "symptom":
         new_event = SymptomEvent(user_id=user_id, symptom_id=type_id,
                                  intensity=num, timestamp=timestamp,
@@ -253,6 +253,7 @@ def track_something():
     location = request.form.get("location")
     lat = None
     lon = None
+    # pdb.set_trace()
 
     # If the user entered a datetime, use that. if not, use current time.
     time_input = request.form.get("datetime")
@@ -668,7 +669,9 @@ def get_yoga_classes():
                "_slug%5D="
     mb_locations = ["love-story-yoga-mission-dolores", "yoga-tree-6", 
                     "yoga-tree-5", "yoga-tree-3", "yoga-tree-2",
-                    "astayoga-mission-dolores", "mission-yoga-mission-district"]
+                    "astayoga-mission-dolores", "mission-yoga-mission-district",
+                    "moxie-yoga-fitness-mission-district",
+                    "moxie-yoga-fitness-bernal-heights"]
 
     # Get class data from all mindbody locations
     mb_classes = []
@@ -682,11 +685,11 @@ def get_yoga_classes():
         info = clas["attributes"]
         clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
                    .astimezone(pytz.utc)
-        title = info["course_name"]
+        title = info['course_name']
 
-        # Eliminate classes outside of availability + yin/kundalini classes
-        if "yin" not in title.lower() and "kundalini" not in title.lower() and \
-            clas_end <= end:
+        # Eliminate classes outside of availability + classes w/ bad keywords
+        bad_kws = ["kundalini", "yin", "light", "therapeutic", "recover"]
+        if not any(kw in title.lower() for kw in bad_kws) and clas_end <= end:
             address = info["location_address"] + ", SF"
             # If user gave location, get travel time to studio
             if user_location:
@@ -702,7 +705,9 @@ def get_yoga_classes():
             if (start + travel_dt) < clas_start:
 
                 # For all classes that meet requirements, get remaining info
-                studio = info["location_name"]
+                studio = info['location_name']
+                if "MOXIE" in studio:
+                    studio = studio[:6] + info['location_neighborhood']
                 instructor = info["instructor_name"]
                 duration = info["class_time_duration"]
 

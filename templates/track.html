@@ -4,7 +4,7 @@
 
 {% block body %}
 <h3>Track Something:</h3>
-<form action="/track" method="POST" id="track-form">
+<form method="POST" id="track-form">
     <label>
         Type: <select id="event-type">
                 <option name="event-type" value="habit">Habit</option>
@@ -39,7 +39,6 @@ let eventInput = $("#event-type")
 
 // this will populate the dropdown menus based on user's tracked event types
 function createDropdowns () {
-    
     $.get("/user-event-types", function (response) {
         let data = $.parseJSON(response);
 
@@ -53,7 +52,7 @@ function createDropdowns () {
                          required>`;
             let options = "";
             let measurement = "";
-            let end = `<input type="number" name="num" id="num" required></label>
+            let end = `<input type="number" name="num" id="num" required=true></label>
                        <br><label>Date/Time (optional):
                        <input type="datetime-local" name="datetime" id="datetime">
                        </label><br><label>Location: 
@@ -95,8 +94,16 @@ function createDropdowns () {
                     return `<a href="/new">Add some symptoms to track here!</a>`;
                 }
             }
+
+        // get location when button is clicked
+        $("#location-button").on('click', getLocation);
+
+        // track event when user submits form
+        $("#track-form input[type='submit']").on('click', trackEvent);
+
+
         });
-    });
+    });    
 }
 
 
@@ -104,25 +111,22 @@ function createDropdowns () {
 $(window).on("load", createDropdowns);
 eventInput.on("change", createDropdowns);
 
-
 // this will get the user's location from the browser
 function getLocation(event) {
     event.preventDefault();
 
     navigator.geolocation.getCurrentPosition(function (position) {
             $("#location").val(`${position.coords.latitude},${position.coords.longitude}`);
-        });
+    });
+
     alert("Location retrieved");
 }
-
-// get location when button is clicked
-$("#location-button").on('click', getLocation);
 
 
 // this will track event based on user inputs
 function trackEvent(event) {
     event.preventDefault();
-
+    debugger;
     const inputs = { 
         eventType: eventInput.val(), 
         typeId: $("#type-id").val(),
@@ -140,9 +144,6 @@ function trackEvent(event) {
         }
     });
 }
-
-// track event when user submits form
-$("#submit-button").on('click', trackEvent);
 
 
 // this will enable GCal and track events from selected time period
@@ -167,6 +168,7 @@ function trackGcalHabits(event) {
 
 // track GCal events when user clicks button 
 $("#gcal-habits-button").on('click', trackGcalHabits);
+
 </script>
 {% endblock %}
 
