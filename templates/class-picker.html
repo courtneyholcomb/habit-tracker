@@ -62,12 +62,13 @@ function getClasses() {
         let data = $.parseJSON(response);
         let classes = `<table><tr><th>Studio</th>
             <th>Instructor</th><th>Class Title</th><th>Start Time</th>
-            <th>Duration</th><th>Travel Time</th></tr>`;
+            <th>Duration</th><th>Transit Time</th><th>Biking Time</th></tr>`;
 
         for (let clas of data) {
             classes += `<tr><td>${clas.studio}</td><td>${clas.instructor}</td>
                 <td>${clas.title}</td><td>${clas.start}</td>
-                <td>${clas.duration} min</td><td>${clas.travel}</td></tr>`;  
+                <td>${clas.duration} min</td><td>${clas.transit}</td>
+                <td>${clas.biking}</td></tr>`;  
         }
         classes += `</table>`;
 
