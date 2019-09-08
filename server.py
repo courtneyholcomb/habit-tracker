@@ -708,6 +708,14 @@ def get_yoga_classes():
                 studio = info['location_name']
                 if "MOXIE" in studio:
                     studio = studio[:6] + info['location_neighborhood']
+                if "Yoga Tree" in studio:
+                    street = address.split()[1]
+                    if street == "Collingwood":
+                        street = "Castro"
+                    elif street == "16th":
+                        street = "Potrero"
+                    studio += " " + street
+
                 instructor = info["instructor_name"]
                 duration = info["class_time_duration"]
 
