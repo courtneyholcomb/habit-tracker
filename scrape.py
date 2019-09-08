@@ -17,42 +17,48 @@ def get_ritual_classes(start, end):
     today_wkday = today.isoweekday() % 7
     input_wkday = input_date.isoweekday() % 7
     delta = (input_date - today).days
-    input_wk = (today_wkday + delta - input_wkday) / 7
+    input_wk = int((today_wkday + delta - input_wkday) / 7)
 
-    info = requests.get("https://reserve.ritualhotyoga.com/reserve/" \
-                        "index.cfm?action=Reserve.chooseClass&" \
-                        f"site=1&wk={input_wk}")
-    soup = BeautifulSoup(info.content, "lxml")
-    day_tds = soup.find('td', class_=f"day{input_wkday}")
-    schedule_blocks = day_tds.find_all("div", class_="scheduleBlock")
+    locations = [{"location_num": 1, "name": "Ritual SoMa",
+                  "address": "1122 Howard St, SF"},
+                 {"location_num": 2, "name": "Ritual FiDi",
+                  "address": "49 Kearny St, SF"}]
 
     all_classes = []
-    for clas in schedule_blocks:
+    for location in locations:
+        info = requests.get("https://reserve.ritualhotyoga.com/reserve/" \
+                            "index.cfm?action=Reserve.chooseClass&" \
+                            f"site={location['location_num']}&wk={input_wk}")
+        soup = BeautifulSoup(info.content, "lxml")
+        day_tds = soup.find('td', class_=f"day{input_wkday}")
+        schedule_blocks = day_tds.find_all("div", class_="scheduleBlock")
 
-        # Eliminate canceled classes
-        if not "cancelled" in clas.text:
-            # Get start time & duration from scraped info
-            start_block = clas.find_all("span", class_="scheduleTime")[0]
-            clas_start = start_block.find(text=True).strip()
-            duration_block = clas.find_all("span", class_="classlength")[0]
-            duration = int(duration_block.text.strip()[:-4])
-            duration_td = timedelta(minutes=duration)
+        for clas in schedule_blocks:
 
-            # Calculate end time
-            end_block = (dateutil.parser.parse(clas_start) + duration_td)
-            clas_end = end_block.strftime("%-I:%M %p")
+            # Eliminate canceled classes
+            if not "cancelled" in clas.text:
+                # Get start time & duration from scraped info
+                start_block = clas.find_all("span", class_="scheduleTime")[0]
+                clas_start = start_block.find(text=True).strip()
+                duration_block = clas.find_all("span", class_="classlength")[0]
+                duration = int(duration_block.text.strip()[:-4])
+                duration_td = timedelta(minutes=duration)
 
-            # Get instructor & title text
-            instructor = clas.find_all("span", class_="scheduleInstruc")[0]\
-                         .text.strip()
-            title = clas.find_all("span", class_="scheduleClass")[0] \
-                    .text.strip()
+                # Calculate end time
+                end_block = (dateutil.parser.parse(clas_start) + duration_td)
+                clas_end = end_block.strftime("%-I:%M %p")
+
+                # Get instructor & title text
+                instructor = clas.find_all("span", class_="scheduleInstruc")[0]\
+                             .text.strip()
+                title = clas.find_all("span", class_="scheduleClass")[0] \
+                        .text.strip()
             
             # Add each class info to list
-            all_classes.append({"studio": "Ritual", "title": title,
+            all_classes.append({"studio": location["name"], "title": title,
                 "instructor": instructor, "start": clas_start,
                 "end": clas_end, "duration": duration,
-                "address": "1122 Howard St, SF"})
+                "address": location["address"]})
 
     return all_classes
 
