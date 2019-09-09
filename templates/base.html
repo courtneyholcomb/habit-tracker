@@ -4,6 +4,7 @@
     <title>
         {% block title %} TITLE GOES HERE {% endblock %}
     </title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.2.1/Chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -12,18 +13,37 @@
     <link rel="icon" href="data:,">
 </head>
 <body>
-    <nav>
-      {% if not session["username"] %}
-        <a href="/register">Register</a>
-        <a href="/login">Log In</a>
-      {% else %}
-        <a href="/logout">Log Out</a>
-        <a href="/new">Add New</a>
-        <a href="/track">Track</a>
-        <a href="/charts">Charts</a>
-        <a href="/class-picker">Yoga Class Picker</a>
-      {% endif %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/">Wellness Tracker</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                {% if not session["username"] %}
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/register">Register</a>
+                        <a class="nav-link" href="/login">Log In</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/track">Track</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/charts">Charts</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/class-picker">Yoga Class Picker</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/logout">Log Out</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
     </nav>
+    <br>
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <ul class=flashes>
@@ -34,5 +54,7 @@
       {% endif %}
     {% endwith %}
     {% block body %} BODY GOES HERE {% endblock %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </body>
 </html>

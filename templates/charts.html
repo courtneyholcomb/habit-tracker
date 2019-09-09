@@ -3,30 +3,38 @@
 {% block title %}Charts{% endblock %}
 
 {% block body %}
-<h2>Events Over Time</h2>
-<form id="chart-params" action="/line-chart-data", method="POST">
-    <label>
-        Start date: <input type="date" name="start-date" id="start-date" required>
-    </label>
+<div class="container">
+  <div class="row">
+    <div class="col">
+        <h2>Associated Events</h2>
+        <button id="group">Group by type</button>
+        <button id="ungroup">Ungroup</button>
+        <div id="bubble-chart"></div>
+    </div>
     <br>
-    <label>
-        End date: <input type="date" name="end-date" id="end-date" required>
-    </label>
     <br>
-    <input type="submit" id="update-chart">
-</form>
+    <br>
+    <div class="col">
+        <h2>Events Over Time</h2>
+        <form id="chart-params" action="/line-chart-data", method="POST">
+            <label>
+                Start date: <input type="date" name="start-date" id="start-date" required>
+            </label>
+            <br>
+            <label>
+                End date: <input type="date" name="end-date" id="end-date" required>
+            </label>
+            <br>
+            <input type="submit" id="update-chart">
+        </form>
 
-<div class="chart">
-    <canvas id="line-chart" width="400" height="300"></canvas>
-    <div id="line-legend" class="chart-legend"></div>
+        <div class="chart">
+            <canvas id="line-chart" width="200" height="100"></canvas>
+            <div id="line-legend" class="chart-legend"></div>
+        </div>
+    </div>    
+  </div>
 </div>
-<br>
-<br>
-<br>
-<h2>Associated Events</h2>
-<button id="group">Group by type</button>
-<button id="ungroup">Ungroup</button>
-<div id="bubble-chart"></div>
 
 
 <script type="text/javascript">
@@ -79,8 +87,8 @@ $("#update-chart").on('click', function (event) {
 
 
 ////// Create bubble chart:
-var width = 800,
-    height = 800;
+var width = 600,
+    height = 600;
 
 // create svg to hold chart
 var svg = d3.select("#bubble-chart")
