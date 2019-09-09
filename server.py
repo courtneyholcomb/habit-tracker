@@ -215,7 +215,9 @@ def show_track_page():
     user = get_user()
 
     if user:
-        return render_template("track.html")
+        return render_template("track.html", habits=user.habits,
+                               influences=user.influences,
+                               symptoms=user.symptoms)
     else:
         return redirect(url_for('show_login_form'))
 
