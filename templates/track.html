@@ -17,12 +17,12 @@
                 </label>
                 <br>
                 <label>
-                    Title: <input type="text" name="label" id="label">
+                    Title: <input type="text" name="label" id="label" required>
                 </label>
                 <br>
                 <div id="unit-or-scale">
                     <label>
-                        Unit of measurement: <input type="text" name="unit" id="unit">
+                        Unit of measurement: <input type="text" name="unit" id="unit" required>
                     </label>
                 </div>
                 <input class="btn btn-primary" type="submit">
@@ -236,7 +236,7 @@ eventInputTrack.on("change", changeForm);
 $("#location-button").on('click', getLocation);
 
 // track event when user submits form
-$("#submit-button").on('click', trackEvent);
+$("#track-form").on('submit', trackEvent);
 
 // this will get the user's location from the browser
 function getLocation(event) {
@@ -252,6 +252,7 @@ function getLocation(event) {
 
 // this will track event based on user inputs
 function trackEvent(event) {
+    debugger; 
     event.preventDefault();
 
     const inputs = { 
@@ -267,7 +268,7 @@ function trackEvent(event) {
             alert(response);
 
             $("#track-form")[0].reset();
-            createDropdowns();
+            changeForm();
         }
     });
 }
@@ -282,7 +283,7 @@ function trackGcalHabits(event) {
         startDate: $("#start-date").val(),
         endDate: $("#end-date").val()
     };
-
+    
     $.post("/track-gcal-habits", inputs, function (response) {
         if (response == "") {
             alert("No new events to track.");
@@ -393,7 +394,7 @@ function addEventType(event) {
     });
 }
 
-$("#new-form input[type='submit']").on("click", addEventType);
+$("#new-form").on("submit", addEventType);
 
 </script>
 {% endblock %}

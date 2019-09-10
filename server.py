@@ -348,8 +348,12 @@ def get_gcal_events():
 
     if not dt_start:
         dt_start = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
+    else:
+        dt_start = dateutil.parser.parse(dt_start).isoformat() + 'Z'
     if not dt_end:
         dt_end = datetime.utcnow().isoformat() + 'Z'
+    else:
+        dt_end = dateutil.parser.parse(dt_end).isoformat() + 'Z'
 
     calendars = gcal_info.calendarList().list().execute()['items']
     events = []
@@ -362,6 +366,7 @@ def get_gcal_events():
             orderBy='startTime'
         ).execute()
         events += events_result["items"]
+        
 
     # If any GCal events in time range have habit labels in title, track them.
     events_tracked = ""
@@ -413,6 +418,8 @@ def get_events_in_range(start, end):
     symptom_events = db.session.query(SymptomEvent).filter(
         SymptomEvent.timestamp.between(start, end),
         SymptomEvent.user == user).all()
+    print({"habit_events": habit_events, "influence_events": influence_events, 
+            "symptom_events": symptom_events})
 
     return {"habit_events": habit_events, "influence_events": influence_events, 
             "symptom_events": symptom_events}
@@ -626,6 +633,7 @@ def get_bubble_chart_data():
                         "label": symptom.label, "units": units,
                         "fill": "#4dc9f6", "group": 2,
                         "associations": associations})
+    print(1)
 
     return json.dumps(event_types)
 
