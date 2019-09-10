@@ -1,11 +1,27 @@
-/*circle {
-    z-index: -1;
-    opacity: 0.2;
-
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+body {
+    font-family: 'Rubik', sans-serif;
 }
 
-text {
-    color: black;
-    position: relative;
-    z-index: 10;
-}*/
+.navbar {
+    background-color: #C16E70;
+    color: #F2F3D9;
+}
+
+.navbar a {
+    color: #F2F3D9;
+}
+
+.navbar-toggler-icon {
+    color: #F2F3D9;
+}
+
+body {
+    background-color: #F2F3D9;
+    color: #151E3F;
+}

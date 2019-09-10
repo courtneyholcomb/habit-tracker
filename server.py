@@ -689,7 +689,7 @@ def get_yoga_classes():
         title = info['course_name']
 
         # Eliminate classes outside of availability + classes w/ bad keywords
-        bad_kws = ["kundalini", "yin", "light", "therapeutic", "recover"]
+        bad_kws = ["kundalini", "yin", "light", "therapeutic", "recover", "buti"]
         if not any(kw in title.lower() for kw in bad_kws) and clas_end <= end:
             address = info["location_address"] + ", SF"
             # If user gave location, get travel time to studio

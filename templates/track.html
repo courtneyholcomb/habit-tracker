@@ -25,12 +25,12 @@
                         Unit of measurement: <input type="text" name="unit" id="unit">
                     </label>
                 </div>
-                <input type="submit">
+                <input class="btn btn-primary" type="submit">
             </form>
             <br>
 
             <!-- Button trigger modal -->
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#tracking-modal">
+            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#tracking-modal">
               What am I currently tracking?
             </button>
 
@@ -55,7 +55,7 @@
                             <table id="symptom-list"></table>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-info" data-dismiss="modal">Close</button>
                     </div>
                   </div>
                 </div>
@@ -107,17 +107,16 @@
                     </label>
                     <button class="location-button" id="location-button">Get My Location</button>
                     <br>
-                    <input type="submit" id="submit-button">
+                    <input type="submit" id="submit-button" class="btn btn-primary">
                 </div>
             </form>
             <br>
             <a href="/new" id="new-prompt" hidden>
                 Add some <span id="change-type2">habits</span> to track here!
             </a>
-            <br>
 
             <!-- Button trigger modal -->
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#gcal-modal">
+            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#gcal-modal">
               Pull Events from GCal
             </button>
 
@@ -147,7 +146,7 @@
                         </form>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-info" data-dismiss="modal">Close</button>
                     </div>
                   </div>
                 </div>
@@ -166,7 +165,7 @@ let eventInputTrack = $("#event-type-track");
 // this will populate the dropdown menus based on user's tracked event types
 // if user has nothing added for that type, link to add new page
 function changeForm () {
-    debugger;
+    
     let type = eventInputTrack.val();
 
     if (type == "habit") {

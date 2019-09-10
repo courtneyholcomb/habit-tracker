@@ -11,9 +11,10 @@
     <script src="https://unpkg.com/d3-force-cluster@latest"></script>
     <link rel="stylesheet" type="text/css" href="/static/styles.css">
     <link rel="icon" href="data:,">
+    <link href="https://fonts.googleapis.com/css?family=Roboto|Rubik&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg">
         <a class="navbar-brand" href="/">Wellness Tracker</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -53,7 +54,9 @@
         </ul>
       {% endif %}
     {% endwith %}
+    <div class="container">
     {% block body %} BODY GOES HERE {% endblock %}
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </body>
