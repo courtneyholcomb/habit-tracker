@@ -7,13 +7,17 @@
   <div class="row">
     <div class="col">
         <h2>Associated Events</h2>
-        <button id="group">Group by type</button>
-        <button id="ungroup">Ungroup</button>
+        Click any event to see which other events are associated with it.
+        <br>
+        <button class="btn btn-primary" id="group">Group by type</button>
+        <button class="btn btn-primary" id="ungroup">Ungroup</button>
         <div id="bubble-chart"></div>
     </div>
     <br>
     <br>
     <br>
+</div>
+<div class="row">
     <div class="col">
         <h2>Events Over Time</h2>
         <form id="chart-params" action="/line-chart-data", method="POST">
@@ -25,7 +29,7 @@
                 End date: <input type="date" name="end-date" id="end-date" required>
             </label>
             <br>
-            <input type="submit" id="update-chart">
+            <input class="btn btn-primary" type="submit" id="update-chart">
         </form>
 
         <div class="chart">

@@ -460,9 +460,8 @@ def get_event_infos(start, end):
 
     influence_event_info = [(influence_event.influence, influence_event,
                              influence_event.intensity, "influence")
-                            for influence_event in influence_events]
-                            # if influence_event.influence.label 
-                            #     not in ["weather", "temperature"]]
+                            for influence_event in influence_events
+                            if influence_event.influence.label != "weather"]
 
     symptom_event_info = [(symptom_event.symptom, symptom_event,
                            symptom_event.intensity, "symptom")
@@ -497,9 +496,9 @@ def get_line_chart_data():
     labels_types = list({(info[0].label, info[3]) for info in event_infos})
 
     graph_colors = [
-        '#4dc9f6', # light blue
-        '#f67019', # orange
-        '#f53794', # pink
+        '#689689', # light blue
+        '#DC9E82', # orange
+        '#D87B7D', # pink
         '#537bc4', # periwinkle
         '#acc236', # light green
         '#166a8f', # grey blue
@@ -600,7 +599,7 @@ def get_bubble_chart_data():
         associations = get_associated_events(evt_dates)
 
         event_types.append({"type": "habit", "id": habit.id, "label": habit.label,
-                        "units": units, "fill": "#C16E70", "group": 0,
+                        "units": units, "fill": "#D87B7D", "group": 0,
                         "associations": associations})
 
     for influence in user.influences:

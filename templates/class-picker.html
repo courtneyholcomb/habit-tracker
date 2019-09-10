@@ -21,9 +21,9 @@
     <label>Location: 
         <input type="text" name="location" id="location">
     </label>
-    <button class="location-button" id="location-button">Get My Location</button>
+    <button class="location-button btn btn-outline-secondary" id="location-button">Get My Location</button>
     <br>
-    <input type="submit" value="Get Classes" id="submit-button">
+    <input type="submit" value="Get Classes" id="submit-button" class="btn btn-primary">
 </form>
 <br>
 If form is left blank, default time range will be from now to six hours from
@@ -60,9 +60,9 @@ function getClasses() {
 
     $.get("/yoga-classes", formData, function (response) {
         let data = $.parseJSON(response);
-        let classes = `<table class="table"><tr><th>Studio</th>
-            <th>Instructor</th><th>Class Title</th><th>Start Time</th>
-            <th>Duration</th><th>Transit Time</th><th>Biking Time</th></tr>`;
+        let classes = `<table class="table .table-sm table-bordered"><tr><th>Studio</th>
+            <th>Instructor</th><th>Class Title</th><th>Start</th>
+            <th>Duration</th><th>Transit</th><th>Biking</th></tr>`;
 
         for (let clas of data) {
             classes += `<tr><td>${clas.studio}</td><td>${clas.instructor}</td>
