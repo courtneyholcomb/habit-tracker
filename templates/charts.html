@@ -87,8 +87,8 @@ $("#update-chart").on('click', function (event) {
 
 
 ////// Create bubble chart:
-var width = 600,
-    height = 600;
+var width = 800,
+    height = 800;
 
 // create svg to hold chart
 var svg = d3.select("#bubble-chart")
@@ -161,23 +161,31 @@ function ready (error, datapoints) {
     var splitForceX = d3.forceX(function(d) {
 
         if (d.group === 0) {
-            return width * 1/3;
+            return width * 1/2;
         } else if (d.group === 1) {
             return width * 1/3;
         } else if (d.group === 2) {
             return width * 2/3;
-        }
+        } else if (d.group === 3) {
+            return width * 1/4;
+        } else if (d.group === 4) {
+            return width * 3/4;
+        } 
     });
 
     var splitForceY = d3.forceY(function(d) {
 
         if (d.group === 0) {
-            return height * 1/3;
+            return height * 1/4;
         } else if (d.group === 1) {
             return height * 2/3;
         } else if (d.group === 2) {
             return height * 2/3;
-        }
+        } else if (d.group === 3) {
+            return height * 1/2;
+        } else if (d.group === 4) {
+            return height * 1/2;
+        } 
     });
 
     // this will re-up energy & move circles to new locations
@@ -207,8 +215,8 @@ function ready (error, datapoints) {
     });
 
     // create forces to move circles back to center
-    var combineForceX = d3.forceX(width / 2).strength(0.08);
-    var combineForceY = d3.forceY(height / 2).strength(0.08);
+    var combineForceX = d3.forceX(width / 2).strength(0.06);
+    var combineForceY = d3.forceY(height / 2).strength(0.06);
 
     // this will re-up energy & move circles back to center
     d3.select("#ungroup").on("click", function () {
@@ -229,9 +237,9 @@ function ready (error, datapoints) {
         // update group to reflect association or not
         groups.datum(function(d) {
             if (associations.includes(d.label)) {
-                d.group = 0;           
+                d.group = 3;           
             } else {
-                d.group = 2;
+                d.group = 4;
             }
 
             return d;
@@ -239,7 +247,7 @@ function ready (error, datapoints) {
 
         // make sure clicked circle in associated group, too
         clickedCircle.datum(function (d) {
-            d.group = 0;
+            d.group = 3;
             return d;
         });
         

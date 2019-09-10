@@ -418,8 +418,6 @@ def get_events_in_range(start, end):
     symptom_events = db.session.query(SymptomEvent).filter(
         SymptomEvent.timestamp.between(start, end),
         SymptomEvent.user == user).all()
-    print({"habit_events": habit_events, "influence_events": influence_events, 
-            "symptom_events": symptom_events})
 
     return {"habit_events": habit_events, "influence_events": influence_events, 
             "symptom_events": symptom_events}
@@ -602,7 +600,7 @@ def get_bubble_chart_data():
         associations = get_associated_events(evt_dates)
 
         event_types.append({"type": "habit", "id": habit.id, "label": habit.label,
-                        "units": units, "fill": "#f53794", "group": 0,
+                        "units": units, "fill": "#C16E70", "group": 0,
                         "associations": associations})
 
     for influence in user.influences:
@@ -617,7 +615,7 @@ def get_bubble_chart_data():
 
             event_types.append({"type": "influence", "id": influence.id,
                             "label": influence.label, "units": units,
-                            "fill": "#f67019", "group": 1,
+                            "fill": "#DC9E82", "group": 1,
                             "associations": associations})
 
     for symptom in user.symptoms:
@@ -631,9 +629,8 @@ def get_bubble_chart_data():
 
         event_types.append({"type": "symptom", "id": symptom.id,
                         "label": symptom.label, "units": units,
-                        "fill": "#4dc9f6", "group": 2,
+                        "fill": "#B2E6D4", "group": 2,
                         "associations": associations})
-    print(1)
 
     return json.dumps(event_types)
 
