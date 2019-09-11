@@ -52,7 +52,8 @@ body {
 
 input[type=datetime-local],
 input[type=date],
-input[type=time] {
+input[type=time],
+input[type=search] {
     -webkit-appearance: textfield;
 }
 

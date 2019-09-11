@@ -45,14 +45,14 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <h6>Habits:</h6>
-                            <table id="habit-list"></table>
+                        <h5><b>Habits:</b></h5>
+                            <table id="habit-list" class="table .table-sm table-bordered"></table>
                         <br>
-                        <h6>Influences:</h6>
-                            <table id="influence-list"></table>
+                        <h5><b>Influences:</b></h5>
+                            <table id="influence-list" class="table .table-sm table-bordered"></table>
                         <br>
-                        <h6>Symptoms:</h6>
-                            <table id="symptom-list"></table>
+                        <h5><b>Symptoms:</b></h5>
+                            <table id="symptom-list" class="table .table-sm table-bordered"></table>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-info" data-dismiss="modal">Close</button>
@@ -142,11 +142,12 @@
                             <input type="date" name="start-date" id="start-date" required> to
                             <input type="date" name="end-date" id="end-date" required>
                             <br>
-                            <input type="submit" id="gcal-habits-button" value="Get Events">
-                        </form>
+                            
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-info" data-dismiss="modal">Close</button>
+                            <input type="submit" id="gcal-habits-button" class="btn btn-primary" value="Get Events">
+                            <button type="button" class="btn btn-info" data-dismiss="modal">Close</button>
+                        </form>
                     </div>
                   </div>
                 </div>
