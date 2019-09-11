@@ -25,7 +25,7 @@
                         Unit of measurement: <input type="text" name="unit" id="unit" required>
                     </label>
                 </div>
-                <input class="btn btn-primary" type="submit">
+                <input class="btn btn-primary" type="submit" id="new-form-submit">
             </form>
             <br>
 
@@ -76,17 +76,17 @@
                 <div id="type-dependent">
                     <label>
                         <span id="change-type1">Habit</span>:
-                        <select name="habit-id" id="habit-id" required>
+                        <select name="habit-id" id="habit-id" class="type-id" required>
                             {% for habit in habits %}
                                 <option value={{habit.id}}>{{habit.label}}</option>
                             {% endfor %}
                         </select>
-                        <select name="influence-id" id="influence-id" hidden>
+                        <select name="influence-id" id="influence-id" class="type-id" hidden>
                             {% for influence in influences %}
                                 <option value={{influence.id}}>{{influence.label}}</option>
                             {% endfor %}
                         </select>
-                        <select name="symptom-id" id="symptom-id" hidden>
+                        <select name="symptom-id" id="symptom-id" class="type-id" hidden>
                             {% for symptom in symptoms %}
                                 <option value={{symptom.id}}>{{symptom.label}}</option>
                             {% endfor %}

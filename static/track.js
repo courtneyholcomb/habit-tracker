@@ -67,9 +67,10 @@ function changeForm () {
 }
 
 
-// update form when page loads & when user chooses new event type
+// update form when page loads, when user chooses new event type, when user submits new form
 $(window).on("load", changeForm);
 eventInputTrack.on("change", changeForm);
+$("#new-form").on('submit', changeForm)
 
 // get location when button is clicked
 $("#location-button").on('click', getLocation);
@@ -96,7 +97,7 @@ function trackEvent(event) {
 
     const inputs = { 
         eventType: eventInputTrack.val(), 
-        typeId: $("#type-id").val(),
+        typeId: $(".type-id:visible").val(),
         num: $("#num").val(),
         datetime: $("#datetime").val(), 
         location: $("#location").val()

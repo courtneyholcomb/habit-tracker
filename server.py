@@ -61,7 +61,7 @@ def validate_login():
     username = request.form.get("username")
     password = request.form.get("password")
 
-    user = db.session.query(User).filter(User.username == username).first()
+    user = User.query.filter(User.username == username).first()
 
     if user and bcrypt.check_password_hash(user.password, password):
         session["username"] = username
@@ -90,10 +90,10 @@ def register():
     confpass = request.form.get("confpass")
 
     ### Check that email & username are available
-    if db.session.query(User).filter_by(email=email).first():
+    if User.query.filter_by(email=email).first():
         return "There is already an account associated with that email."
 
-    if db.session.query(User).filter_by(username=username).first():
+    if User.query.filter_by(username=username).first():
         return "Username already taken."
 
     ### Validate password
@@ -165,16 +165,15 @@ def validate_new_event_type(label):
 
     user = get_user()
 
-    if db.session.query(Habit).filter(Habit.label == label,
-                                      Habit.user == user).first():
+    if Habit.query.filter(Habit.label == label, Habit.user == user).first():
         return "You already have a habit with that title."
 
-    if db.session.query(Influence).filter(Influence.label == label,
-                                          Influence.user == user).first():
+    if Influence.query.filter(Influence.label == label,
+                              Influence.user == user).first():
         return "You already have an influence with that title."
 
-    if db.session.query(Symptom).filter(Symptom.label == label,
-                                        Symptom.user == user).first():
+    if Symptom.query.filter(Symptom.label == label,
+                            Symptom.user == user).first():
         return "You already have a symptom with that title."
 
 
@@ -381,10 +380,10 @@ def get_gcal_events():
             if habit.label.lower() in title_words:
 
                 # Check if event is already tracked
-                duplicate = db.session.query(HabitEvent)\
-                             .filter(HabitEvent.user_id == user.id,
-                                     HabitEvent.timestamp == start,
-                                     HabitEvent.habit_id == habit.id).first()
+                duplicate = HabitEvent.query\
+                                .filter(HabitEvent.user_id == user.id,
+                                        HabitEvent.timestamp == start,
+                                        HabitEvent.habit_id == habit.id).first()
 
                 if not duplicate:
                     create_event("habit", user.id, habit.id, 1, start)
@@ -408,16 +407,16 @@ def get_events_in_range(start, end):
 
     user = get_user()
 
-    habit_events = db.session.query(HabitEvent).filter(HabitEvent.timestamp
+    habit_events = HabitEvent.query.filter(HabitEvent.timestamp
         .between(start, end), HabitEvent.user == user).all()
 
-    influence_events = db.session.query(InfluenceEvent).filter(
-        InfluenceEvent.timestamp.between(start, end),
-        InfluenceEvent.user == user).all()
+    influence_events = InfluenceEvent.query.filter(
+                            InfluenceEvent.timestamp.between(start, end),
+                            InfluenceEvent.user == user).all()
 
-    symptom_events = db.session.query(SymptomEvent).filter(
-        SymptomEvent.timestamp.between(start, end),
-        SymptomEvent.user == user).all()
+    symptom_events = SymptomEvent.query.filter(
+                            SymptomEvent.timestamp.between(start, end),
+                            SymptomEvent.user == user).all()
 
     return {"habit_events": habit_events, "influence_events": influence_events, 
             "symptom_events": symptom_events}
@@ -428,17 +427,17 @@ def get_evt_type_min_max(evt_type, label):
     user = get_user()
 
     if evt_type == "habit":
-        type_option = db.session.query(Habit).filter(Habit.user == user,
+        type_option = Habit.query.filter(Habit.user == user,
                                                     Habit.label == label).one()
         units = [evt.num_units for evt in type_option.habit_events]
 
     elif evt_type == "influence":
-        type_option = db.session.query(Influence).filter(Influence.user == user,
+        type_option = Influence.query.filter(Influence.user == user,
                                                 Influence.label == label).one()
         units = [evt.intensity for evt in type_option.influence_events]
 
     elif evt_type == "symptom":
-        type_option = db.session.query(Symptom).filter(Symptom.user == user,
+        type_option = Symptom.query.filter(Symptom.user == user,
                                                 Symptom.label == label).one()
         units = [evt.intensity for evt in type_option.symptom_events]
 
@@ -562,12 +561,9 @@ def get_associated_events(evt_dates):
     assoc_dates = evt_dates | prior_dates | following_dates
 
     # Get all events for user associated with those dates
-    habit_evts = db.session.query(HabitEvent)\
-                     .filter(HabitEvent.user == user).all()
-    infl_evts = db.session.query(InfluenceEvent)\
-                    .filter(InfluenceEvent.user == user).all()
-    symp_evts = db.session.query(SymptomEvent)\
-                    .filter(SymptomEvent.user == user).all()
+    habit_evts = HabitEvent.query.filter(HabitEvent.user == user).all()
+    infl_evts = InfluenceEvent.query.filter(InfluenceEvent.user == user).all()
+    symp_evts = SymptomEvent.query.filter(SymptomEvent.user == user).all()
 
     # Get all event labels associated with those dates
     assoc_habits = [habit_evt.habit.label for habit_evt in habit_evts
