@@ -92,7 +92,6 @@ function addEventType(event) {
             showEventTypes();
         }
 
-        console.log(new_id);
         // when new type is added, insert it into tracking dropdown list
         // need to get the type id from /new route and insert here. reformat to JSON and parse things needed 
         if (formData["eventType"] == "habit") {
