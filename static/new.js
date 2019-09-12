@@ -76,8 +76,13 @@ function addEventType(event) {
     };
 
     getEventData = $.post("/new", formData, function (response) {
-        alert(response);
-        if (response.includes("added successfully")) {
+
+        let data = $.parseJSON(response);
+        let new_id = data.new_id;
+
+        alert(data.success);
+
+        if (data.success.includes("added successfully")) {
 
             $("#new-form")[0].reset();
 
@@ -85,6 +90,23 @@ function addEventType(event) {
             <input type="text" name="unit" id="unit" required></label>`);
 
             showEventTypes();
+        }
+
+        console.log(new_id);
+        // when new type is added, insert it into tracking dropdown list
+        // need to get the type id from /new route and insert here. reformat to JSON and parse things needed 
+        if (formData["eventType"] == "habit") {
+
+            $("#habit-id").append(`<option value=${new_id}>${formData["label"]}</option>`);
+
+        } else if (formData["eventType"] == "influence") {
+
+            $("#influence-id").append(`<option value=${new_id}>${formData["label"]}</option>`);
+
+        } else if (formData["eventType"] == "symptom") {
+
+            $("#symptom-id").append(`<option value=${new_id}>${formData["label"]}</option>`);
+
         }
     });
 }

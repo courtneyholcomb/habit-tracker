@@ -203,7 +203,20 @@ def add_new_event_type():
     db.session.add(new_event_type)
     db.session.commit()
 
-    return f"New {event_type} added successfully!"
+    if event_type == "habit":
+        new_obj = Habit.query.filter_by(label=label).one()
+        new_id = new_obj.id
+
+    elif event_type == "influence":
+        new_obj = Influence.query.filter_by(label=label).one()
+        new_id = new_obj.id
+
+    elif event_type == "symptom":
+        new_obj = Symptom.query.filter_by(label=label).one()
+        new_id = new_obj.id
+
+    return json.dumps({"new_id": new_id,
+                       "success": f"New {event_type} added successfully!"})
         
 
 ### Routes to track events

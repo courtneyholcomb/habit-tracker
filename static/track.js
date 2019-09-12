@@ -78,6 +78,7 @@ $("#location-button").on('click', getLocation);
 // track event when user submits form
 $("#track-form").on('submit', trackEvent);
 
+
 // this will get the user's location from the browser
 function getLocation(event) {
     event.preventDefault();
@@ -132,7 +133,6 @@ function trackGcalHabits(event) {
         }
     });
 }
-
 
 // track GCal events when user clicks button 
 $("#gcal-habits-button").on('click', trackGcalHabits);
