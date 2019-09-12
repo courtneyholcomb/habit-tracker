@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta, date, timezone
 import dateutil.parser
 import pytz
-from collections import defaultdict
+# from collections import defaultdict
 import pickle
 import pdb
 
@@ -287,7 +287,7 @@ def track_current_weather(lat, lon):
 
     temp_info = weather_info['main']
     current_temp_f = 9 / 5 * (temp_info['temp'] - 273) + 32
-
+ 
     temp_infl = ensure_tracking_infl("temperature", 125)
     weather_infl = ensure_tracking_infl("weather", 1000)
 
@@ -323,9 +323,11 @@ def enable_gcal():
 
     # If no valid creds, prompt login.
     if not creds or not creds.valid:
+        # if creds are expired but renewable, renew them.
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
+            # prompt login
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
@@ -408,7 +410,7 @@ def get_events_in_range(start, end):
     user = get_user()
 
     habit_events = HabitEvent.query.filter(HabitEvent.timestamp
-        .between(start, end), HabitEvent.user == user).all()
+                        .between(start, end), HabitEvent.user == user).all()
 
     influence_events = InfluenceEvent.query.filter(
                             InfluenceEvent.timestamp.between(start, end),
