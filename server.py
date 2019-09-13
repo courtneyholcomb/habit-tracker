@@ -344,8 +344,10 @@ def enable_gcal():
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
+
         # Save the credentials to db
         user.gcal_token = creds
+        db.session.commit()
 
     return build('calendar', 'v3', credentials=creds)
 
@@ -727,31 +729,32 @@ def get_yoga_classes():
             # Eliminate classes user can't travel to in time
             clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
                          .astimezone(pytz.utc)
-            travel_dt = timedelta(minutes=int(travel_time[:-5]))
-            if (start + travel_dt) < clas_start:
+            if "hour" not in travel_time:
+                travel_dt = timedelta(minutes=int(travel_time[:-5]))
+                if (start + travel_dt) < clas_start:
 
-                # For all classes that meet requirements, get remaining info
-                studio = info['location_name']
-                if "MOXIE" in studio:
-                    studio = studio[:6] + info['location_neighborhood']
-                if "Yoga Tree" in studio:
-                    street = address.split()[1]
-                    if street == "Collingwood":
-                        street = "Castro"
-                    elif street == "16th":
-                        street = "Potrero"
-                    studio += " " + street
+                    # For all classes that meet requirements, get remaining info
+                    studio = info['location_name']
+                    if "MOXIE" in studio:
+                        studio = studio[:6] + info['location_neighborhood']
+                    if "Yoga Tree" in studio:
+                        street = address.split()[1]
+                        if street == "Collingwood":
+                            street = "Castro"
+                        elif street == "16th":
+                            street = "Potrero"
+                        studio += " " + street
 
-                instructor = info["instructor_name"]
-                duration = info["class_time_duration"]
+                    instructor = info["instructor_name"]
+                    duration = info["class_time_duration"]
 
-                # Add info from each class in time range to data_list
-                data_list.append({"studio": studio, "title": title,
-                    "instructor": instructor, "duration": duration,
-                    "start": clas_start.astimezone(pst).strftime("%-I:%M%p"), 
-                    "end": clas_end.astimezone(pst).strftime("%-I:%M%p"), 
-                    "address": address, "travel": travel_time,
-                    "transit": transit_time, "biking": biking_time})
+                    # Add info from each class in time range to data_list
+                    data_list.append({"studio": studio, "title": title,
+                        "instructor": instructor, "duration": duration,
+                        "start": clas_start.astimezone(pst).strftime("%-I:%M%p"), 
+                        "end": clas_end.astimezone(pst).strftime("%-I:%M%p"), 
+                        "address": address, "travel": travel_time,
+                        "transit": transit_time, "biking": biking_time})
 
     ### Get info for CorePower classes
     # Timezone adjust for accurate comparison with corepower's time format

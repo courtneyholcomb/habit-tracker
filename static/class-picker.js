@@ -37,6 +37,9 @@ function getClasses() {
         classes += `</tbody></table>`;
 
         $("#yoga-classes").html(classes);
+        
+        $("#submit-button").attr("disabled", false);
+
         $('#class-table').DataTable({
             paging: false
         });
@@ -46,5 +49,10 @@ function getClasses() {
 window.onload = getClasses();
 $("#submit-button").on("click", function (event) {
     event.preventDefault();
+
+    $("#submit-button").attr("disabled", true);
+
     getClasses();
+
+
 });
