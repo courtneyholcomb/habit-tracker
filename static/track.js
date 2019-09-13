@@ -93,7 +93,7 @@ function getLocation(event) {
 
 // this will track event based on user inputs
 function trackEvent(event) {
-    debugger; 
+
     event.preventDefault();
 
     const inputs = { 

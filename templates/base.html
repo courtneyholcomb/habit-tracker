@@ -53,19 +53,20 @@
     </nav>
     <br>
     <br>
-    <br>
-    <br>
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <ul class=flashes>
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-        </ul>
+        <div class="container">
+            <ul class=flashes>
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        </div>
       {% endif %}
     {% endwith %}
+    <br>
     <div class="container">
-    {% block body %} BODY GOES HERE {% endblock %}
+        {% block body %} BODY GOES HERE {% endblock %}
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>

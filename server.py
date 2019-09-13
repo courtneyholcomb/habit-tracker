@@ -204,15 +204,18 @@ def add_new_event_type():
     db.session.commit()
 
     if event_type == "habit":
-        new_obj = Habit.query.filter_by(label=label).one()
+        new_obj = Habit.query.filter(Habit.label == label,
+                                     Habit.user == user).one()
         new_id = new_obj.id
 
     elif event_type == "influence":
-        new_obj = Influence.query.filter_by(label=label).one()
+        new_obj = Influence.query.filter(Influence.label == label,
+                                         Influence.user == user).one()
         new_id = new_obj.id
 
     elif event_type == "symptom":
-        new_obj = Symptom.query.filter_by(label=label).one()
+        new_obj = Symptom.query.filter(Symptom.label == label,
+                                     Symptom.user == user).one()
         new_id = new_obj.id
 
     return json.dumps({"new_id": new_id,
