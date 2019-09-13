@@ -121,15 +121,15 @@ function trackGcalHabits(event) {
     event.preventDefault();
     
     const inputs = { 
-        startDate: $("#start-date").val(),
-        endDate: $("#end-date").val()
+        startDate: $("#gcal-start-date").val(),
+        endDate: $("#gcal-end-date").val()
     };
     
     $.post("/track-gcal-habits", inputs, function (response) {
         if (response == "") {
             alert("No new events to track.");
         } else {
-            alert(`Events tracked:\n${response}`);
+            alert(`Events Tracked:\n${response}`);
         }
     });
 }

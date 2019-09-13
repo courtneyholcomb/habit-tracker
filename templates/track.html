@@ -139,8 +139,8 @@
                         <form>
                             Time frame to check (default is past week):
                             <br>
-                            <input type="date" name="start-date" id="start-date" required> to
-                            <input type="date" name="end-date" id="end-date" required>
+                            <input type="date" name="gcal-start-date" id="gcal-start-date" required> to
+                            <input type="date" name="gcal-end-date" id="gcal-end-date" required>
                             <br>
                             
 
@@ -161,6 +161,54 @@
 
 <!-- JS for track section -->
 <script src="../static/track.js"></script>
+
+
+<br>
+<br>
+<br>
+<br>
+<div class="container">
+  <div class="row">
+    <div class="col">
+        <h2>Associated Events</h2>
+        Click any event to see which other events are associated with it.
+        <br>
+        <button class="btn btn-primary" id="group">Group by type</button>
+        <button class="btn btn-primary" id="ungroup">Ungroup</button>
+        <div id="bubble-chart"></div>
+    </div>
+    <br>
+    <br>
+    <br>
+</div>
+<div class="row">
+    <div class="col">
+        <h2>Events Over Time</h2>
+        <form id="chart-params" action="/line-chart-data", method="POST">
+            <label>
+                Start date: <input type="date" name="line-start-date" id="line-start-date" required>
+            </label>
+            <br>
+            <label>
+                End date: <input type="date" name="line-end-date" id="line-end-date" required>
+            </label>
+            <br>
+            <input class="btn btn-primary" type="submit" id="update-chart">
+        </form>
+
+        <div class="chart">
+            <canvas id="line-chart" width="200" height="100"></canvas>
+            <div id="line-legend" class="chart-legend"></div>
+        </div>
+    </div>    
+  </div>
+</div>
+
+<!-- JS for line chart -->
+<script src="../static/line-chart.js"></script>
+
+<!-- JS for bubble chart -->
+<script src="../static/bubble-chart.js"></script>
 
 {% endblock %}
 

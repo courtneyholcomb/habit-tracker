@@ -6,7 +6,6 @@ import os
 from datetime import datetime, timedelta, date, timezone
 import dateutil.parser
 import pytz
-# from collections import defaultdict
 import pickle
 import pdb
 
@@ -392,6 +391,11 @@ def get_gcal_events():
     for event in events:
         # Get info from event
         start = event['start'].get('dateTime', event['start'].get('date'))
+        start_format = start[:10]
+        if len(start) > 11:
+            reformat_time = datetime.strptime(start[11:16], "%H:%M") \
+                            .strftime("%I:%M %p")
+            start_format += " " + reformat_time
         end = event['end'].get('dateTime', event['end'].get('date'))
         title = event['summary']
         title_words = set(title.lower().split())
@@ -408,8 +412,8 @@ def get_gcal_events():
                 if not duplicate:
                     create_event("habit", user.id, habit.id, 1, start)
                     events_tracked += (
-                        f"Habit: {habit.label}, "
-                        f"Event: {title} {start}\n"
+                        f"\nHabit – {habit.label}\n"
+                        f"Event – {title} ({start_format})\n"
                     )
 
     return events_tracked
@@ -497,6 +501,7 @@ def get_line_chart_data():
 
     start_input = request.form.get("startDate")
     end_input = request.form.get("endDate")
+    print(start_input, end_input)
 
     # If no date range chosen, use trailing week
     if start_input and end_input:

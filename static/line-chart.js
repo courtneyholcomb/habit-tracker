@@ -24,8 +24,8 @@ $("#update-chart").on('click', function (event) {
     event.preventDefault();
 
     let dates = {
-        startDate: $("#start-date").val(),
-        endDate: $("#end-date").val()
+        startDate: $("#line-start-date").val(),
+        endDate: $("#line-end-date").val()
     };
 
     $.post("/line-chart-data", dates, function (response) {
