@@ -5,3 +5,4 @@ credentials.json
 quickstart.py
 token.pickle
 secrets.sh
+habit-tracker.sql
