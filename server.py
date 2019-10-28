@@ -880,4 +880,4 @@ if __name__ == "__main__":
     connect_to_db(app)
     # DebugToolbarExtension(app)
 
-    app.run(port=5000, host='0.0.0.0')
+#     app.run(port=5000, host='0.0.0.0')
