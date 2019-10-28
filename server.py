@@ -28,9 +28,9 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 
 def connect_to_db(app):
-    """Connect Flask app to habit-tracker database."""
+    """Connect Flask app to cultivate database."""
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///habit-tracker"
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///cultivate"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     db.init_app(app)
