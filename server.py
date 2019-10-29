@@ -501,7 +501,6 @@ def get_line_chart_data():
 
     start_input = request.form.get("startDate")
     end_input = request.form.get("endDate")
-    print(start_input, end_input)
 
     # If no date range chosen, use trailing week
     if start_input and end_input:
