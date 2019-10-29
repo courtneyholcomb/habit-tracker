@@ -11,7 +11,8 @@ class User(db.Model):
 
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    id = db.Column(db.Integer, db.Sequence('user_id_seq'), autoincrement=True, 
+                   primary_key=True)
     email = db.Column(db.String(64), unique=True, nullable=False)
     username = db.Column(db.String(25), unique=True, nullable=False)
     password = db.Column(db.String(64), nullable=False)
