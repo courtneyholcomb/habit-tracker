@@ -686,12 +686,12 @@ def get_yoga_classes():
 
     ### Get info for Mindbody classes
     # Prep info for mindbody get requests
-    mindbody = "https://prod-swamis.mindbody.io/api/v1/search/class_times?sort"\
-               "=start_time&page%5Bsize%5D=100&page%5Bnumber%5D=1&filter%5Bsta"\
-               f"rt_time_from%5D={start.isoformat() + 'Z'}&filter%5Bstart_time"\
-               f"_to%5D={end.isoformat() + 'Z'}&filter%5Bdynamic_priceable%5D="\
-               "any&filter%5Binclude_dynamic_pricing%5D=true&filter%5Blocation"\
-               "_slug%5D="
+    mindbody = "https://prod-mkt-gateway.mindbody.io/v1/search/class_times?sort"\
+                "=start_time&page.size=100&page.number=1&filter.category_types=Fitness"\
+                f"&filter.inventory_source=MB&filter.start_time_from={start.isoformat() + 'Z'}"\
+                f"&filter.start_time_to={end.isoformat() + 'Z'}&filter.dynamic_priceable=any"\
+                "&filter.include_dynamic_pricing=true&filter.location_slug="
+    
     mb_locations = ["love-story-yoga-mission-dolores", "yoga-tree-6", 
                     "yoga-tree-5", "yoga-tree-3", "yoga-tree-2",
                     "astayoga-mission-dolores", "mission-yoga-mission-district",
