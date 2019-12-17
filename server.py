@@ -691,7 +691,7 @@ def get_yoga_classes():
                 f"&filter.inventory_source=MB&filter.start_time_from={start.isoformat() + 'Z'}"\
                 f"&filter.start_time_to={end.isoformat() + 'Z'}&filter.dynamic_priceable=any"\
                 "&filter.include_dynamic_pricing=true&filter.location_slug="
-    
+
     mb_locations = ["love-story-yoga-mission-dolores", "yoga-tree-6", 
                     "yoga-tree-5", "yoga-tree-3", "yoga-tree-2",
                     "astayoga-mission-dolores", "mission-yoga-mission-district",
