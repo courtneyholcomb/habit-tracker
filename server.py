@@ -743,14 +743,14 @@ def get_yoga_classes():
                     # For all classes that meet requirements, get remaining info
                     studio = info['location_name']
                     if "MOXIE" in studio:
-                        studio = studio[:6] + info['location_neighborhood']
+                        studio = studio[:5] + " " + info['location_neighborhood']
                     if "Yoga Tree" in studio:
                         street = address.split()[1]
                         if street == "Collingwood":
                             street = "Castro"
                         elif street == "16th":
                             street = "Potrero"
-                        studio = f"{studio} {street}"
+                        studio = f"Yoga Tree {street}"
 
                     instructor = info["instructor_name"]
                     duration = info["class_time_duration"]
@@ -786,8 +786,8 @@ def get_yoga_classes():
 
     # Extract individual class info from corepower JSON response
     for clas in cp_classes:
-        clas_start = dateutil.parser.parse(clas["start_date_time"])
-        clas_end = dateutil.parser.parse(clas["end_date_time"])
+        clas_start = dateutil.parser.parse(clas["start_date_time"]).astimezone(pytz.utc)
+        clas_end = dateutil.parser.parse(clas["end_date_time"]).astimezone(pytz.utc)
         title = clas["name"]
 
         # Eliminate those out of input time range + sculpt/c1 classes
@@ -820,8 +820,8 @@ def get_yoga_classes():
             if (cp_tz_start + travel_td) < clas_start:
 
                 # For all classes that meet requirements, get remaining info
-                start_format = clas_start.strftime("%-I:%M%p")
-                end_format = clas_end.strftime("%-I:%M%p")
+                start_format = clas_start.astimezone(pst).strftime("%-I:%M%p")
+                end_format = clas_end.astimezone(pst).strftime("%-I:%M%p")
                 instructor = clas["teacher"]["name"]
                 duration = (clas_end - clas_start).total_seconds() / 60
 
