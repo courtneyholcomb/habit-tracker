@@ -670,7 +670,6 @@ def get_yoga_classes():
     start_input = request.args.get("start")
     end_input = request.args.get("end")
     pst = pytz.timezone('US/Pacific')
-    utc = pytz.timezone('UTC')
     user_location = request.args.get("location")
     gmaps_token = os.environ.get("GMAPS_TOKEN")
     gm_url_1 = "https://maps.googleapis.com/maps/api/directions/json"
