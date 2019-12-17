@@ -670,6 +670,7 @@ def get_yoga_classes():
     start_input = request.args.get("start")
     end_input = request.args.get("end")
     pst = pytz.timezone('US/Pacific')
+    utc = pytz.timezone('UTC')
     user_location = request.args.get("location")
     gmaps_token = os.environ.get("GMAPS_TOKEN")
     gm_url_1 = "https://maps.googleapis.com/maps/api/directions/json"
@@ -681,8 +682,10 @@ def get_yoga_classes():
         end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M") \
               .astimezone(pytz.utc)
     else:
-        start = datetime.now(timezone.utc)
+        start = datetime.utcnow()
         end = (start + timedelta(hours=6))
+
+    print(end) # debug
 
     ### Get info for Mindbody classes
     # Prep info for mindbody get requests
@@ -710,6 +713,7 @@ def get_yoga_classes():
         info = clas["attributes"]
         clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
                    .astimezone(pytz.utc)
+        print(clas_end) # debug
         title = info['course_name']
 
         # Eliminate classes outside of availability + classes w/ bad keywords
@@ -750,7 +754,7 @@ def get_yoga_classes():
                             street = "Castro"
                         elif street == "16th":
                             street = "Potrero"
-                        studio += " " + street
+                        studio = f"{studio} {street}"
 
                     instructor = info["instructor_name"]
                     duration = info["class_time_duration"]
@@ -765,8 +769,8 @@ def get_yoga_classes():
 
     ### Get info for CorePower classes
     # Timezone adjust for accurate comparison with corepower's time format
-    cp_tz_start = start - timedelta(hours=7)
-    cp_tz_end = end - timedelta(hours=7)
+    cp_tz_start = start.astimezone(pytz.utc)
+    cp_tz_end = end.astimezone(pytz.utc)
 
     # Prep info needed for corepower get requests
     cp_start = "https://d2244u25cro8mt.cloudfront.net/locations/1419/"
