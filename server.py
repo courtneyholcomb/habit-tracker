@@ -677,11 +677,11 @@ def get_yoga_classes():
     # If no time entered, start = now and end = 6 hours from now
     if date_input and start_input and end_input:
         start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M") \
-                .astimezone(pytz.utc)
+                .astimezone(pst)
         end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M") \
-              .astimezone(pytz.utc)
+              .astimezone(pst)
     else:
-        start = datetime.now(timezone.utc)
+        start = datetime.now().astimezone(pst)
         end = (start + timedelta(hours=6))
 
     ### Get info for Mindbody classes
@@ -709,7 +709,7 @@ def get_yoga_classes():
     for clas in mb_classes:
         info = clas["attributes"]
         clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
-                   .astimezone(pytz.utc)
+                   .astimezone(pst)
         title = info['course_name']
 
         # Eliminate classes outside of availability + classes w/ bad keywords
@@ -735,22 +735,18 @@ def get_yoga_classes():
             
             # Eliminate classes user can't travel to in time
             clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
-                         .astimezone(pytz.utc)
+                         .astimezone(pst)
             if "hour" not in travel_time:
                 travel_dt = timedelta(minutes=int(travel_time[:-5]))
                 if (start + travel_dt) < clas_start:
 
                     # For all classes that meet requirements, get remaining info
                     studio = info['location_name']
+                    brand = info['location_business_name']
                     if "MOXIE" in studio:
-                        studio = studio[:5] + " " + info['location_neighborhood']
-                    if "Yoga Tree" in studio:
-                        street = address.split()[1]
-                        if street == "Collingwood":
-                            street = "Castro"
-                        elif street == "16th":
-                            street = "Potrero"
-                        studio = f"Yoga Tree {street}"
+                        studio = f"{studio[:5]} {info['location_neighborhood']}"
+                    if "Yoga Tree" in brand:
+                        studio = f"{brand} {studio}"
 
                     instructor = info["instructor_name"]
                     duration = info["class_time_duration"]
@@ -758,15 +754,15 @@ def get_yoga_classes():
                     # Add info from each class in time range to data_list
                     data_list.append({"studio": studio, "title": title,
                         "instructor": instructor, "duration": duration,
-                        "start": clas_start.astimezone(pst).strftime("%-I:%M%p"), 
-                        "end": clas_end.astimezone(pst).strftime("%-I:%M%p"), 
+                        "start": clas_start.strftime("%-I:%M%p"),
+                        "end": clas_end.strftime("%-I:%M%p"),
                         "address": address, "travel": travel_time,
                         "transit": transit_time, "biking": biking_time})
 
     ### Get info for CorePower classes
     # Timezone adjust for accurate comparison with corepower's time format
-    cp_tz_start = start.astimezone(pytz.utc)
-    cp_tz_end = end.astimezone(pytz.utc)
+    cp_tz_start = start
+    cp_tz_end = end
 
     # Prep info needed for corepower get requests
     cp_start = "https://d2244u25cro8mt.cloudfront.net/locations/1419/"
@@ -786,8 +782,8 @@ def get_yoga_classes():
 
     # Extract individual class info from corepower JSON response
     for clas in cp_classes:
-        clas_start = dateutil.parser.parse(clas["start_date_time"]).astimezone(pytz.utc)
-        clas_end = dateutil.parser.parse(clas["end_date_time"]).astimezone(pytz.utc)
+        clas_start = dateutil.parser.parse(clas["start_date_time"]).astimezone(pst)
+        clas_end = dateutil.parser.parse(clas["end_date_time"]).astimezone(pst)
         title = clas["name"]
 
         # Eliminate those out of input time range + sculpt/c1 classes
