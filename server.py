@@ -682,10 +682,8 @@ def get_yoga_classes():
         end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M") \
               .astimezone(pytz.utc)
     else:
-        start = datetime.utcnow()
+        start = datetime.now(timezone.utc)
         end = (start + timedelta(hours=6))
-
-    print(end) # debug
 
     ### Get info for Mindbody classes
     # Prep info for mindbody get requests
@@ -713,7 +711,6 @@ def get_yoga_classes():
         info = clas["attributes"]
         clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
                    .astimezone(pytz.utc)
-        print(clas_end) # debug
         title = info['course_name']
 
         # Eliminate classes outside of availability + classes w/ bad keywords
