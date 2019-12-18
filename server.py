@@ -683,6 +683,8 @@ def get_yoga_classes():
     else:
         start = datetime.now().astimezone(pst)
         end = start + timedelta(hours=6)
+    print(f"start server.py={start}")
+    print(f"end server.py={end}")
 
     ### Get info for Mindbody classes
     # Prep info for mindbody get requests
@@ -710,6 +712,7 @@ def get_yoga_classes():
         info = clas["attributes"]
         clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
                    .astimezone(pytz.utc).astimezone(pst)
+        print(f"mindbody clas_end server.py={clas_end}")
         title = info['course_name']
 
         # Eliminate classes outside of availability + classes w/ bad keywords
@@ -736,6 +739,7 @@ def get_yoga_classes():
             # Eliminate classes user can't travel to in time
             clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
                          .astimezone(pytz.utc).astimezone(pst)
+            print(f"mindbody clas_start server.py={clas_start}")
             if "hour" not in travel_time:
                 travel_dt = timedelta(minutes=int(travel_time[:-5]))
                 if (start + travel_dt) < clas_start:
@@ -781,6 +785,8 @@ def get_yoga_classes():
         clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(pst)
         clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(pst)
         title = clas["name"]
+        print(f"corepower clas_end server.py={clas_end}")
+        print(f"corepower clas_start server.py={clas_start}")
 
         # Eliminate those out of input time range + sculpt/c1 classes
         if clas_start >= start and clas_end <= end \
@@ -829,7 +835,8 @@ def get_yoga_classes():
     ritual_classes = get_ritual_classes(start, end)
 
     for ritual_class in ritual_classes:
-
+        print(f"ritual clas_start={ritual_class['start']}")
+        print(f"ritual clas_start={ritual_class['end']}")
         if user_location:
             gm_url_2 = f"?origin={user_location}&destination={address}" \
                        f"&key={gmaps_token}&mode="

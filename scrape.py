@@ -41,12 +41,14 @@ def get_ritual_classes(start, end):
                 start_block = clas.find_all("span", class_="scheduleTime")[0]
                 clas_start = dateutil.parser.parse(input_date.strftime("%m/%d/%Y") + " " +
                                                    start_block.find(text=True).strip()).astimezone(pst)
+                print(f"clas_start scrape.py={clas_start}")
                 duration_block = clas.find_all("span", class_="classlength")[0]
                 duration = int(duration_block.text.strip()[:-4])
                 duration_td = timedelta(minutes=duration)
 
                 # Calculate end time
                 clas_end = clas_start + duration_td
+                print(f"clas_end scrape.py={clas_end}")
 
                 # Get instructor & title text
                 instructor = clas.find_all("span", class_="scheduleInstruc")[0]\
