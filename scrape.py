@@ -13,12 +13,12 @@ def get_ritual_classes(start, end):
 
     pst = pytz.timezone('US/Pacific')
     local_tz = get_localzone()
-    input_date = start.date()
+    input_date = start.astimezone(pst).date()
 
     # Get today's weekday and input's weekday, starting with Sunday = 0
     # Use to create correct request URL & find correct html block
-    today = datetime.now().date()
-    today_wkday = today.isoweekday() % 7
+    today = datetime.now().date().astimezone(local_tz)
+    today_wkday = today.astimezone(pst).isoweekday() % 7
     input_wkday = input_date.isoweekday() % 7
     delta = (input_date - today).days
     input_wk = int((today_wkday + delta - input_wkday) / 7)

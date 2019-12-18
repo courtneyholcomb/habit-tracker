@@ -768,7 +768,7 @@ def get_yoga_classes():
     # Prep info needed for corepower get requests
     cp_start = "https://d2244u25cro8mt.cloudfront.net/locations/1419/"
     cp_locations = ["73", "45", "65", "67"]
-    cp_end = f"/classes/{start.date()}/{end.date()}"
+    cp_end = f"/classes/{start.astimezone(local_tz).date()}/{end.astimezone(local_tz).date()}"
     cp_addresses = {
         "Hayes Valley": "150 Van Ness Ave Suite A",
         "Fremont": "215 Fremont Street",
