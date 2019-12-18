@@ -4,6 +4,7 @@ import requests
 import json
 import os
 from datetime import datetime, timedelta, date, timezone
+import time
 import dateutil.parser
 import pytz
 import pickle
@@ -669,6 +670,7 @@ def get_yoga_classes():
     date_input = request.args.get("dateInput")
     start_input = request.args.get("start")
     end_input = request.args.get("end")
+    server_timezone = time.tzname[0]
     pst = pytz.timezone('US/Pacific')
     user_location = request.args.get("location")
     gmaps_token = os.environ.get("GMAPS_TOKEN")
