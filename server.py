@@ -6,6 +6,7 @@ import os
 from datetime import datetime, timedelta, date, timezone
 import time
 import dateutil.parser
+from tzlocal import get_localzone
 import pytz
 import pickle
 import pdb
@@ -670,7 +671,7 @@ def get_yoga_classes():
     date_input = request.args.get("dateInput")
     start_input = request.args.get("start")
     end_input = request.args.get("end")
-    server_timezone = time.tzname[0]
+    local_tz = get_localzone()
     pst = pytz.timezone('US/Pacific')
     user_location = request.args.get("location")
     gmaps_token = os.environ.get("GMAPS_TOKEN")
@@ -678,12 +679,10 @@ def get_yoga_classes():
 
     # If no time entered, start = now and end = 6 hours from now
     if date_input and start_input and end_input:
-        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M") \
-                .astimezone(pst)
-        end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M") \
-              .astimezone(pst)
+        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(local_tz)
+        end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").astimezone(local_tz)
     else:
-        start = datetime.now().astimezone(pst)
+        start = datetime.now().astimezone(local_tz)
         end = start + timedelta(hours=6)
     print(f"start server.py={start}")
     print(f"end server.py={end}")
@@ -784,8 +783,8 @@ def get_yoga_classes():
 
     # Extract individual class info from corepower JSON response
     for clas in cp_classes:
-        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(pst)
-        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(pst)
+        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(local_tz).astimezone(pst)
+        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(local_tz).astimezone(pst)
         title = clas["name"]
         print(f"corepower clas_end server.py={clas_end}")
         print(f"corepower clas_start server.py={clas_start}")
@@ -800,9 +799,7 @@ def get_yoga_classes():
 
             # If user gave location, get travel time to studio
             if user_location:
-                gm_url_2 = f"?origin={user_location}&destination={address}" \
-                           f"&key={gmaps_token}&mode="
-
+                gm_url_2 = f"?origin={user_location}&destination={address}&key={gmaps_token}&mode="
                 transit_time = requests.get(gm_url_1 + gm_url_2 + "transit") \
                                .json()["routes"][0]["legs"][0]["duration"] \
                                ["text"]
@@ -842,13 +839,10 @@ def get_yoga_classes():
         if user_location:
             gm_url_2 = f"?origin={user_location}&destination={address}" \
                        f"&key={gmaps_token}&mode="
-
-            transit_time = requests.get(gm_url_1 + gm_url_2 + "transit") \
-                           .json()["routes"][0]["legs"][0]["duration"] \
-                           ["text"]
-            biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling") \
-                           .json()["routes"][0]["legs"][0]["duration"] \
-                           ["text"]
+            transit_time = requests.get(gm_url_1 + gm_url_2 + "transit").json() \
+                            ["routes"][0]["legs"][0]["duration"]["text"]
+            biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling").json() \
+                            ["routes"][0]["legs"][0]["duration"]["text"]
             travel_time = min(transit_time, biking_time)
         else:
             transit_time = ""

@@ -2,13 +2,17 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime, timedelta
 import dateutil.parser
+from tzlocal import get_localzone
 import pytz
+
+
 
 
 def get_ritual_classes(start, end):
     """Get a list of Ritual classes within given date range."""
 
     pst = pytz.timezone('US/Pacific')
+    local_tz = get_localzone()
     input_date = start.date()
 
     # Get today's weekday and input's weekday, starting with Sunday = 0
@@ -40,7 +44,7 @@ def get_ritual_classes(start, end):
                 # Get start time & duration from scraped info
                 start_block = clas.find_all("span", class_="scheduleTime")[0]
                 clas_start = dateutil.parser.parse(input_date.strftime("%m/%d/%Y") + " " +
-                                                   start_block.find(text=True).strip()).astimezone(pst)
+                             start_block.find(text=True).strip()).astimezone(pst)
                 print(f"clas_start scrape.py={clas_start}")
                 duration_block = clas.find_all("span", class_="classlength")[0]
                 duration = int(duration_block.text.strip()[:-4])
