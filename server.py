@@ -679,10 +679,10 @@ def get_yoga_classes():
 
     # If no time entered, start = now and end = 6 hours from now
     if date_input and start_input and end_input:
-        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(local_tz)
-        end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").astimezone(local_tz)
+        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(pst)
+        end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").astimezone(pst)
     else:
-        start = datetime.now().astimezone(local_tz)
+        start = datetime.now().astimezone(pst)
         end = start + timedelta(hours=6)
     print(f"start server.py={start}")
     print(f"end server.py={end}")
