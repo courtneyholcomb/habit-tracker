@@ -9,7 +9,7 @@ def get_ritual_classes(start, end):
     """Get a list of Ritual classes within given date range."""
 
     pst = pytz.timezone('US/Pacific')
-    input_date = start.astimezone(pst).date()
+    input_date = start.date()
 
     # Get today's weekday and input's weekday, starting with Sunday = 0
     # Use to create correct request URL & find correct html block
@@ -39,26 +39,27 @@ def get_ritual_classes(start, end):
             if not "cancelled" in clas.text:
                 # Get start time & duration from scraped info
                 start_block = clas.find_all("span", class_="scheduleTime")[0]
-                clas_start = start_block.find(text=True).strip()
+                clas_start = dateutil.parser.parse(input_date.strftime("%m/%d/%Y") + " " +
+                                                   start_block.find(text=True).strip()).astimezone(pst)
                 duration_block = clas.find_all("span", class_="classlength")[0]
                 duration = int(duration_block.text.strip()[:-4])
                 duration_td = timedelta(minutes=duration)
 
                 # Calculate end time
-                end_block = (dateutil.parser.parse(clas_start) + duration_td)
-                clas_end = end_block.strftime("%-I:%M %p")
+                clas_end = clas_start + duration_td
 
                 # Get instructor & title text
                 instructor = clas.find_all("span", class_="scheduleInstruc")[0]\
                              .text.strip()
                 title = clas.find_all("span", class_="scheduleClass")[0] \
                         .text.strip()
-            
-            # Add each class info to list
-            all_classes.append({"studio": location["name"], "title": title,
-                "instructor": instructor, "start": clas_start,
-                "end": clas_end, "duration": duration,
-                "address": location["address"]})
+
+            if clas_start >= start and clas_end <= end:
+                # Add each class info to list
+                all_classes.append({"studio": location["name"], "title": title,
+                    "instructor": instructor, "start": clas_start,
+                    "end": clas_end, "duration": duration,
+                    "address": location["address"]})
 
     return all_classes
 

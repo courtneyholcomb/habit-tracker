@@ -682,14 +682,14 @@ def get_yoga_classes():
               .astimezone(pst)
     else:
         start = datetime.now().astimezone(pst)
-        end = (start + timedelta(hours=6))
+        end = start + timedelta(hours=6)
 
     ### Get info for Mindbody classes
     # Prep info for mindbody get requests
     mindbody = "https://prod-mkt-gateway.mindbody.io/v1/search/class_times?sort"\
                 "=start_time&page.size=100&page.number=1&filter.category_types=Fitness"\
-                f"&filter.inventory_source=MB&filter.start_time_from={start.isoformat() + 'Z'}"\
-                f"&filter.start_time_to={end.isoformat() + 'Z'}&filter.dynamic_priceable=any"\
+                f"&filter.inventory_source=MB&filter.start_time_from={start.astimezone(pytz.utc).isoformat() + 'Z'}"\
+                f"&filter.start_time_to={end.astimezone(pytz.utc).isoformat() + 'Z'}&filter.dynamic_priceable=any"\
                 "&filter.include_dynamic_pricing=true&filter.location_slug="
 
     mb_locations = ["love-story-yoga-mission-dolores", "yoga-tree-6", 
@@ -709,7 +709,7 @@ def get_yoga_classes():
     for clas in mb_classes:
         info = clas["attributes"]
         clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
-                   .astimezone(pst)
+                   .astimezone(pytz.utc).astimezone(pst)
         title = info['course_name']
 
         # Eliminate classes outside of availability + classes w/ bad keywords
@@ -735,7 +735,7 @@ def get_yoga_classes():
             
             # Eliminate classes user can't travel to in time
             clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
-                         .astimezone(pst)
+                         .astimezone(pytz.utc).astimezone(pst)
             if "hour" not in travel_time:
                 travel_dt = timedelta(minutes=int(travel_time[:-5]))
                 if (start + travel_dt) < clas_start:
@@ -760,14 +760,10 @@ def get_yoga_classes():
                         "transit": transit_time, "biking": biking_time})
 
     ### Get info for CorePower classes
-    # Timezone adjust for accurate comparison with corepower's time format
-    cp_tz_start = start
-    cp_tz_end = end
-
     # Prep info needed for corepower get requests
     cp_start = "https://d2244u25cro8mt.cloudfront.net/locations/1419/"
     cp_locations = ["73", "45", "65", "67"]
-    cp_end = f"/classes/{cp_tz_start.date()}/{cp_tz_end.date()}"
+    cp_end = f"/classes/{start.date()}/{end.date()}"
     cp_addresses = {
         "Hayes Valley": "150 Van Ness Ave Suite A",
         "Fremont": "215 Fremont Street",
@@ -782,12 +778,12 @@ def get_yoga_classes():
 
     # Extract individual class info from corepower JSON response
     for clas in cp_classes:
-        clas_start = dateutil.parser.parse(clas["start_date_time"]).astimezone(pst)
-        clas_end = dateutil.parser.parse(clas["end_date_time"]).astimezone(pst)
+        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(pst)
+        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(pst)
         title = clas["name"]
 
         # Eliminate those out of input time range + sculpt/c1 classes
-        if clas_start >= cp_tz_start and clas_end <= cp_tz_end \
+        if clas_start >= start and clas_end <= end \
             and not "Sculpt" in title and not "C1" in title:
 
             # If user gave location, get travel time to studio
@@ -813,11 +809,11 @@ def get_yoga_classes():
 
             # Eliminate classes user can't travel to in time
             travel_td = timedelta(minutes=int(travel_time[:-5]))
-            if (cp_tz_start + travel_td) < clas_start:
+            if (start + travel_td) < clas_start:
 
                 # For all classes that meet requirements, get remaining info
-                start_format = clas_start.astimezone(pst).strftime("%-I:%M%p")
-                end_format = clas_end.astimezone(pst).strftime("%-I:%M%p")
+                start_format = clas_start.strftime("%-I:%M%p")
+                end_format = clas_end.strftime("%-I:%M%p")
                 instructor = clas["teacher"]["name"]
                 duration = (clas_end - clas_start).total_seconds() / 60
 
@@ -834,38 +830,33 @@ def get_yoga_classes():
 
     for ritual_class in ritual_classes:
 
-        # Convert start & end to datetime objects for comparison w/ availability
-        start_dt = dateutil.parser.parse(ritual_class["start"]).astimezone(pst)
-        end_dt = dateutil.parser.parse(ritual_class["end"]).astimezone(pst)
+        if user_location:
+            gm_url_2 = f"?origin={user_location}&destination={address}" \
+                       f"&key={gmaps_token}&mode="
 
-        # Eliminate classes out of time range
-        if start_dt >= start and end_dt <= end:
+            transit_time = requests.get(gm_url_1 + gm_url_2 + "transit") \
+                           .json()["routes"][0]["legs"][0]["duration"] \
+                           ["text"]
+            biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling") \
+                           .json()["routes"][0]["legs"][0]["duration"] \
+                           ["text"]
+            travel_time = min(transit_time, biking_time)
+        else:
+            transit_time = ""
+            biking_time = ""
+            travel_time = "0 mins"
 
-            if user_location:
-                gm_url_2 = f"?origin={user_location}&destination={address}" \
-                           f"&key={gmaps_token}&mode="
+        # Eliminate classes user can't travel to in time
+        travel_td = timedelta(minutes=int(travel_time[:-5]))
+        if start + travel_td < ritual_class["start"]:
 
-                transit_time = requests.get(gm_url_1 + gm_url_2 + "transit") \
-                               .json()["routes"][0]["legs"][0]["duration"] \
-                               ["text"]
-                biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling") \
-                               .json()["routes"][0]["legs"][0]["duration"] \
-                               ["text"]
-                travel_time = min(transit_time, biking_time)
-            else:
-                transit_time = ""
-                biking_time = ""
-                travel_time = "0 mins"            
-
-            # Eliminate classes user can't travel to in time
-            travel_td = timedelta(minutes=int(travel_time[:-5]))
-            if start + travel_td < start_dt:
-
-                # Add travel time to class info + add info to data list
-                ritual_class["travel"] = travel_time
-                ritual_class["transit"] = transit_time
-                ritual_class["biking"] = biking_time
-                data_list.append(ritual_class)
+            # Add travel time to class info + add info to data list
+            ritual_class["travel"] = travel_time
+            ritual_class["transit"] = transit_time
+            ritual_class["biking"] = biking_time
+            ritual_class["start"] = ritual_class["start"].strftime("%-I:%M%p")
+            ritual_class["end"] = ritual_class["end"].strftime("%-I:%M%p")
+            data_list.append(ritual_class)
     
     return json.dumps(data_list) 
 
