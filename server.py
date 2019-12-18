@@ -768,7 +768,7 @@ def get_yoga_classes():
     # Prep info needed for corepower get requests
     cp_start = "https://d2244u25cro8mt.cloudfront.net/locations/1419/"
     cp_locations = ["73", "45", "65", "67"]
-    cp_end = f"/classes/{start.astimezone(local_tz).date()}/{end.astimezone(local_tz).date()}"
+    cp_end = f"/classes/{start.astimezone(pytz.utc).date()}/{end.astimezone(pytz.utc).date()}"
     cp_addresses = {
         "Hayes Valley": "150 Van Ness Ave Suite A",
         "Fremont": "215 Fremont Street",
@@ -783,8 +783,8 @@ def get_yoga_classes():
 
     # Extract individual class info from corepower JSON response
     for clas in cp_classes:
-        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(local_tz).astimezone(pst)
-        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(local_tz).astimezone(pst)
+        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(pytz.utc).astimezone(pst)
+        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(pytz.utc).astimezone(pst)
         title = clas["name"]
         print(f"corepower clas_end server.py={clas_end}")
         print(f"corepower clas_start server.py={clas_start}")
