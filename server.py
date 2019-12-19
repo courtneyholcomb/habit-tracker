@@ -672,6 +672,7 @@ def get_yoga_classes():
     start_input = request.args.get("start")
     end_input = request.args.get("end")
     local_tz = get_localzone()
+    print(local_tz)
     pst = pytz.timezone('US/Pacific')
     user_location = request.args.get("location")
     gmaps_token = os.environ.get("GMAPS_TOKEN")
@@ -679,8 +680,8 @@ def get_yoga_classes():
 
     # If no time entered, start = now and end = 6 hours from now
     if date_input and start_input and end_input:
-        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(pst)
-        end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").astimezone(pst)
+        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").replace(tzinfo=pst)
+        end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").replace(tzinfo=pst)
     else:
         start = datetime.now().astimezone(pst)
         end = start + timedelta(hours=6)
@@ -712,7 +713,7 @@ def get_yoga_classes():
     for clas in mb_classes:
         info = clas["attributes"]
         clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
-                   .astimezone(pytz.utc).astimezone(pst)
+                   .replace(tzinfo=pytz.utc).astimezone(pst)
         print(f"mindbody clas_end server.py={clas_end}")
         title = info['course_name']
 
@@ -739,7 +740,7 @@ def get_yoga_classes():
             
             # Eliminate classes user can't travel to in time
             clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
-                         .astimezone(pytz.utc).astimezone(pst)
+                         .replace(tzinfo=pytz.utc).astimezone(pst)
             print(f"mindbody clas_start server.py={clas_start}")
             if "hour" not in travel_time:
                 travel_dt = timedelta(minutes=int(travel_time[:-5]))
@@ -768,7 +769,7 @@ def get_yoga_classes():
     # Prep info needed for corepower get requests
     cp_start = "https://d2244u25cro8mt.cloudfront.net/locations/1419/"
     cp_locations = ["73", "45", "65", "67"]
-    cp_end = f"/classes/{start.astimezone(pytz.utc).date()}/{end.astimezone(pytz.utc).date()}"
+    cp_end = f"/classes/{start.date()}/{end.date()}"
     cp_addresses = {
         "Hayes Valley": "150 Van Ness Ave Suite A",
         "Fremont": "215 Fremont Street",
@@ -783,8 +784,8 @@ def get_yoga_classes():
 
     # Extract individual class info from corepower JSON response
     for clas in cp_classes:
-        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(pytz.utc).astimezone(pst)
-        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(pytz.utc).astimezone(pst)
+        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).replace(tzinfo=pst)
+        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).replace(tzinfo=pst)
         title = clas["name"]
         print(f"corepower clas_end server.py={clas_end}")
         print(f"corepower clas_start server.py={clas_start}")
