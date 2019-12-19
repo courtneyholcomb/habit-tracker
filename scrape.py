@@ -12,7 +12,7 @@ def get_ritual_classes(start, end):
     """Get a list of Ritual classes within given date range."""
 
     pst = pytz.timezone('US/Pacific')
-    input_date = start..replace(tzinfo=pst).date()
+    input_date = start.replace(tzinfo=pst).date()
 
     # Get today's weekday and input's weekday, starting with Sunday = 0
     # Use to create correct request URL & find correct html block
