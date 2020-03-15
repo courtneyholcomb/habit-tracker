@@ -939,8 +939,8 @@ def get_la_yoga_classes():
 
     # Extract individual class info from corepower JSON response
     for clas in cp_classes:
-        clas_start = dateutil.parser.parse(clas["start_date_time"]).astimezone(pst)
-        clas_end = dateutil.parser.parse(clas["end_date_time"]).astimezone(pst)
+        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(pst)
+        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(pst)
         title = clas["name"]
 
         # Eliminate those out of input time range + sculpt/c1 classes
