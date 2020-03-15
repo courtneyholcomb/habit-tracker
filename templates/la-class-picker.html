@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Yoga Class Picker{% endblock %}
+
+{% block body %}
+
+<h2>Find a Yoga Class</h2>
+<form action="/la-yoga-classes" id="yoga-form">
+    <label>Date: 
+        <input type="date" name="date-input" id="date-input">
+    </label>
+    <br>
+    <label>Availability start: 
+        <input type="time" name="start" id="start" value="start" required>
+    </label>
+    <br>
+    <label>Availability end: 
+        <input type="time" name="end" id="end" value="end" required>
+    </label>
+    <br>
+    <input type="submit" value="Get Classes" id="submit-button" class="btn btn-primary">
+</form>
+<br>
+If form is left blank, default time range will be from now to six hours from
+now. If no location is entered, travel time will not be calculated.
+<br>
+<br>
+<div id="yoga-classes">Calculating best classes...</div>
+
+<script src="../static/la-class-picker.js"></script>
+
+
+{% endblock %}

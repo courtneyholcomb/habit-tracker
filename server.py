@@ -664,6 +664,13 @@ def show_class_picker():
     return render_template("class-picker.html")
 
 
+@app.route("/la-class-picker")
+def show_la_class_picker():
+    """Show LA class picker page."""
+
+    return render_template("la-class-picker.html")
+
+
 @app.route("/yoga-classes")
 def get_yoga_classes():
     """Get JSON-formatted yoga classes for given day."""
@@ -710,12 +717,11 @@ def get_yoga_classes():
     # Extract individual class info from mindbody JSON response
     for clas in mb_classes:
         info = clas["attributes"]
-        # clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
-        #            .replace(tzinfo=pytz.utc).astimezone(pst)
+        clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
+                        .astimezone(pytz.utc).astimezone(pst)
         duration = info["class_time_duration"]
         clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
-                         .astimezone(pytz.utc).astimezone(pst) # replace?
-        clas_end = clas_start + timedelta(minutes=duration)
+                         .astimezone(pytz.utc).astimezone(pst)
         title = info['course_name']
 
         # Eliminate classes outside of availability + classes w/ bad keywords
@@ -856,6 +862,100 @@ def get_yoga_classes():
             ritual_class["start"] = ritual_class["start"].strftime("%-I:%M%p")
             ritual_class["end"] = ritual_class["end"].strftime("%-I:%M%p")
             data_list.append(ritual_class)
+    
+    return json.dumps(data_list) 
+
+
+@app.route("/la-yoga-classes")
+def get_la_yoga_classes():
+    """Get JSON-formatted yoga classes for given day."""
+
+    date_input = request.args.get("dateInput")
+    start_input = request.args.get("start")
+    end_input = request.args.get("end")
+    pst = pytz.timezone('US/Pacific')
+
+    # If no time entered, start = now and end = 6 hours from now
+    if date_input and start_input and end_input:
+        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(pst)
+        end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").astimezone(pst)
+    else:
+        start = datetime.now().astimezone(pst)
+        end = start + timedelta(hours=6)
+
+    ### Get info for Mindbody classes
+    # Prep info for mindbody get requests
+    mindbody = "https://prod-mkt-gateway.mindbody.io/v1/search/class_times?sort"\
+                "=start_time&page.size=100&page.number=1&filter.category_types=Fitness"\
+                f"&filter.inventory_source=MB&filter.start_time_from={start.astimezone(pytz.utc).isoformat() + 'Z'}"\
+                f"&filter.start_time_to={end.astimezone(pytz.utc).isoformat() + 'Z'}&filter.dynamic_priceable=any"\
+                "&filter.include_dynamic_pricing=true&filter.location_slug="
+
+    mb_locations = ["yoga-jaya", "yoga-blend", "yoga-noho-noho", "the-wellness-of-oz"]
+
+    # Get class data from all mindbody locations
+    mb_classes = []
+    for location in mb_locations:
+        data = requests.get(mindbody + location).json()["data"]
+        mb_classes.extend(data)
+
+    data_list = []
+    # Extract individual class info from mindbody JSON response
+    for clas in mb_classes:
+        info = clas["attributes"]
+        clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
+                   .astimezone(pytz.utc).astimezone(pst)
+        duration = info["class_time_duration"]
+        clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
+                     .astimezone(pytz.utc).astimezone(pst)
+        title = info['course_name']
+
+        # Eliminate classes outside of availability + classes w/ bad keywords
+        # bad_kws = ["kundalini", "yin", "light", "therapeutic", "recover", "buti"]
+        # if not any(kw in title.lower() for kw in bad_kws) and
+        if clas_end <= end and start <= clas_start:
+            studio = info['location_name']
+            instructor = info["instructor_name"]
+
+
+            # Add info from each class in time range to data_list
+            data_list.append({"studio": studio, "title": title,
+                "instructor": instructor, "duration": duration,
+                "start": clas_start.strftime("%-I:%M%p"),
+                "end": clas_end.strftime("%-I:%M%p")})
+
+    ### Get info for CorePower classes
+    # Prep info needed for corepower get requests
+    cp_start = "https://d2244u25cro8mt.cloudfront.net/locations/1419/"
+    cp_locations = ["32", "30", "12"]
+    cp_end = f"/classes/{start.date()}/{end.date()}"
+
+    # Get class data from each corepower location
+    cp_classes = []
+    for location in cp_locations:
+        cp_classes.extend(requests.get(cp_start + location + cp_end).json())
+
+    # Extract individual class info from corepower JSON response
+    for clas in cp_classes:
+        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(pst)
+        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(pst)
+        title = clas["name"]
+
+        # Eliminate those out of input time range + sculpt/c1 classes
+        if clas_start >= start and clas_end <= end and not "Sculpt" in title:
+            studio = clas["location"]["name"][3:]
+
+            # For all classes that meet requirements, get remaining info
+            start_format = clas_start.strftime("%-I:%M%p")
+            end_format = clas_end.strftime("%-I:%M%p")
+            instructor = clas["teacher"]["name"]
+            duration = (clas_end - clas_start).total_seconds() / 60
+
+            # add info from each class in time range to data_list
+            data_list.append({"studio": "CorePower " + studio,
+                             "title": title, "instructor": instructor,
+                             "start": start_format, "end": end_format,
+                             "duration": duration})
     
     return json.dumps(data_list) 
 
