@@ -672,21 +672,19 @@ def get_yoga_classes():
     start_input = request.args.get("start")
     end_input = request.args.get("end")
     local_tz = get_localzone()
-    print(local_tz)
     pst = pytz.timezone('US/Pacific')
+
     user_location = request.args.get("location")
     gmaps_token = os.environ.get("GMAPS_TOKEN")
     gm_url_1 = "https://maps.googleapis.com/maps/api/directions/json"
 
     # If no time entered, start = now and end = 6 hours from now
     if date_input and start_input and end_input:
-        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").replace(tzinfo=pst)
-        end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").replace(tzinfo=pst)
+        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(pst)
+        end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").astimezone(pst)
     else:
         start = datetime.now().astimezone(pst)
         end = start + timedelta(hours=6)
-    print(f"start server.py={start}")
-    print(f"end server.py={end}")
 
     ### Get info for Mindbody classes
     # Prep info for mindbody get requests
@@ -712,9 +710,12 @@ def get_yoga_classes():
     # Extract individual class info from mindbody JSON response
     for clas in mb_classes:
         info = clas["attributes"]
-        clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
-                   .replace(tzinfo=pytz.utc).astimezone(pst)
-        print(f"mindbody clas_end server.py={clas_end}")
+        # clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
+        #            .replace(tzinfo=pytz.utc).astimezone(pst)
+        duration = info["class_time_duration"]
+        clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
+                         .astimezone(pytz.utc).astimezone(pst) # replace?
+        clas_end = clas_start + timedelta(minutes=duration)
         title = info['course_name']
 
         # Eliminate classes outside of availability + classes w/ bad keywords
@@ -739,12 +740,9 @@ def get_yoga_classes():
                 travel_time = "0 mins"
             
             # Eliminate classes user can't travel to in time
-            clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
-                         .replace(tzinfo=pytz.utc).astimezone(pst)
-            print(f"mindbody clas_start server.py={clas_start}")
             if "hour" not in travel_time:
                 travel_dt = timedelta(minutes=int(travel_time[:-5]))
-                if (start + travel_dt) < clas_start:
+                if (start + travel_dt) <= clas_start:
 
                     # For all classes that meet requirements, get remaining info
                     studio = info['location_name']
@@ -755,7 +753,7 @@ def get_yoga_classes():
                         studio = f"{brand} {studio}"
 
                     instructor = info["instructor_name"]
-                    duration = info["class_time_duration"]
+
 
                     # Add info from each class in time range to data_list
                     data_list.append({"studio": studio, "title": title,
@@ -784,11 +782,9 @@ def get_yoga_classes():
 
     # Extract individual class info from corepower JSON response
     for clas in cp_classes:
-        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).replace(tzinfo=pst)
-        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).replace(tzinfo=pst)
+        clas_start = dateutil.parser.parse(clas["start_date_time"][:-1]).astimezone(pst)
+        clas_end = dateutil.parser.parse(clas["end_date_time"][:-1]).astimezone(pst)
         title = clas["name"]
-        print(f"corepower clas_end server.py={clas_end}")
-        print(f"corepower clas_start server.py={clas_start}")
 
         # Eliminate those out of input time range + sculpt/c1 classes
         if clas_start >= start and clas_end <= end \
@@ -815,7 +811,7 @@ def get_yoga_classes():
 
             # Eliminate classes user can't travel to in time
             travel_td = timedelta(minutes=int(travel_time[:-5]))
-            if (start + travel_td) < clas_start:
+            if (start + travel_td) <= clas_start:
 
                 # For all classes that meet requirements, get remaining info
                 start_format = clas_start.strftime("%-I:%M%p")
@@ -835,8 +831,7 @@ def get_yoga_classes():
     ritual_classes = get_ritual_classes(start, end)
 
     for ritual_class in ritual_classes:
-        print(f"ritual clas_start={ritual_class['start']}")
-        print(f"ritual clas_start={ritual_class['end']}")
+
         if user_location:
             gm_url_2 = f"?origin={user_location}&destination={address}" \
                        f"&key={gmaps_token}&mode="
@@ -852,7 +847,7 @@ def get_yoga_classes():
 
         # Eliminate classes user can't travel to in time
         travel_td = timedelta(minutes=int(travel_time[:-5]))
-        if start + travel_td < ritual_class["start"]:
+        if start + travel_td <= ritual_class["start"]:
 
             # Add travel time to class info + add info to data list
             ritual_class["travel"] = travel_time

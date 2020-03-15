@@ -12,7 +12,7 @@ def get_ritual_classes(start, end):
     """Get a list of Ritual classes within given date range."""
 
     pst = pytz.timezone('US/Pacific')
-    input_date = start.replace(tzinfo=pst).date()
+    input_date = start.date()
 
     # Get today's weekday and input's weekday, starting with Sunday = 0
     # Use to create correct request URL & find correct html block
@@ -43,15 +43,14 @@ def get_ritual_classes(start, end):
                 # Get start time & duration from scraped info
                 start_block = clas.find_all("span", class_="scheduleTime")[0]
                 clas_start = dateutil.parser.parse(input_date.strftime("%m/%d/%Y") + " " +
-                             start_block.find(text=True).strip()).replace(tzinfo=pst)
-                print(f"clas_start scrape.py={clas_start}")
+                             start_block.find(text=True).strip()).astimezone(pst)
+
                 duration_block = clas.find_all("span", class_="classlength")[0]
                 duration = int(duration_block.text.strip()[:-4])
                 duration_td = timedelta(minutes=duration)
 
                 # Calculate end time
                 clas_end = clas_start + duration_td
-                print(f"clas_end scrape.py={clas_end}")
 
                 # Get instructor & title text
                 instructor = clas.find_all("span", class_="scheduleInstruc")[0]\
