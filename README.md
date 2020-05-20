@@ -1,5 +1,5 @@
 # Cultivate
-Cultivate is a wellness tracker that enables users to create custom habits, influences, and symptoms, and track them, and analyze how they correlate with each other over time.
+Cultivate is a wellness tracker that enables users to create custom habits, influences, and symptoms, track them, and analyze how they correlate with each other over time.
 
 Users can link their Google Calendar credentials to their account, enabling the app to quickly scrape habits from events in their calendar (e.g., an event titled "Power Yoga" will be tracked if the user is tracking "yoga" as a habit). The app reaches out to the Google Calendar API and opens an OAuth window so that the user can log in. Once logged in, the app stores their credentials in the app database as a pickle, enabling the user to continue tracking their events without reauthenticating.
 
