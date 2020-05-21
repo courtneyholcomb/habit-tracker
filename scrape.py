@@ -46,7 +46,7 @@ def get_ritual_classes(start, end):
                              start_block.find(text=True).strip()).astimezone(pst)
 
                 duration_block = clas.find_all("span", class_="classlength")[0]
-                duration = int(duration_block.text.strip()[:-4])
+                duration = int(duration_block.text.strip().split("-")[0])
                 duration_td = timedelta(minutes=duration)
 
                 # Calculate end time
