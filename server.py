@@ -19,7 +19,16 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-from models import db, User, Habit, HabitEvent, Influence, InfluenceEvent, Symptom, SymptomEvent
+from models import (
+    db,
+    User,
+    Habit,
+    HabitEvent,
+    Influence,
+    InfluenceEvent,
+    Symptom,
+    SymptomEvent,
+)
 from scrape import get_ritual_classes
 
 
@@ -30,8 +39,6 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 
 def connect_to_db(app):
-    """Connect Flask app to cultivate database."""
-
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///cultivate"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
@@ -41,24 +48,19 @@ def connect_to_db(app):
 ### Routes to handle user registration, login, logout
 @app.route("/")
 def show_homepage():
-    """Show homepage."""
     if "username" not in session:
-        return redirect(url_for('show_login_form'))
+        return redirect(url_for("show_login_form"))
     else:
-        return redirect(url_for('show_track_page'))
+        return redirect(url_for("show_track_page"))
 
 
 @app.route("/login")
 def show_login_form():
-    """Show login page."""
-
     return render_template("login.html")
 
 
 @app.route("/login", methods=["POST"])
 def validate_login():
-    """Validate username and password then log user in.."""
-
     username = request.form.get("username")
     password = request.form.get("password")
 
@@ -71,20 +73,16 @@ def validate_login():
         return "OK", 200
 
     else:
-        return "Incorrect username or password."    
+        return "Incorrect username or password."
 
 
 @app.route("/register")
 def show_register_form():
-    """Show registration page."""
-
     return render_template("register.html")
 
 
 @app.route("/register", methods=["POST"])
 def register():
-    """Validate and instantiate a new User then log them into the session."""
-
     username = request.form.get("username")
     email = request.form.get("email")
     password = request.form.get("password")
@@ -121,16 +119,12 @@ def register():
 
 @app.route("/logout")
 def log_out():
-    """Removing user session data at logout."""
-    
     session.clear()
 
-    return redirect(url_for('show_login_form'))
+    return redirect(url_for("show_login_form"))
 
 
 def get_user():
-    """Get user object from session."""
-
     if "user_id" in session:
         user = User.query.get(session["user_id"])
         return user
@@ -139,49 +133,41 @@ def get_user():
 ### Routes to add new things to track
 @app.route("/new")
 def show_add_new_form():
-    """Show the page where you can create a new Habit, Influence, or Symptom."""
-
     if get_user():
         return render_template("new.html")
 
     else:
-        redirect(url_for('show_login_form'))
+        redirect(url_for("show_login_form"))
 
 
 @app.route("/user-event-types")
 def get_user_event_types():
-    """Get JSON of all Habits, Influences, and Symptoms for logged in User."""
-
     user = get_user()
 
-    return json.dumps({
-        "habits": [habit.to_json() for habit in user.habits],
-        "influences": [influence.to_json() for influence in user.influences],
-        "symptoms": [symptom.to_json() for symptom in user.symptoms]
-    })
+    return json.dumps(
+        {
+            "habits": [habit.to_json() for habit in user.habits],
+            "influences": [influence.to_json() for influence in user.influences],
+            "symptoms": [symptom.to_json() for symptom in user.symptoms],
+        }
+    )
 
 
 def validate_new_event_type(label):
-    """Check if new event type label is already used by User."""
-
     user = get_user()
 
     if Habit.query.filter(Habit.label == label, Habit.user == user).first():
         return "You already have a habit with that title."
 
-    if Influence.query.filter(Influence.label == label,
-                              Influence.user == user).first():
+    if Influence.query.filter(Influence.label == label, Influence.user == user).first():
         return "You already have an influence with that title."
 
-    if Symptom.query.filter(Symptom.label == label,
-                            Symptom.user == user).first():
+    if Symptom.query.filter(Symptom.label == label, Symptom.user == user).first():
         return "You already have a symptom with that title."
 
 
 @app.route("/new", methods=["POST"])
 def add_new_event_type():
-    """Instantiate a new Habit, Influence, or Symptom."""
-
     event_type = request.form.get("eventType")
     label = request.form.get("label")
     unit = request.form.get("unit")
@@ -191,7 +177,7 @@ def add_new_event_type():
     invalid_message = validate_new_event_type(label)
     if invalid_message:
         return invalid_message
-    
+
     if event_type == "habit":
         new_event_type = Habit(label=label, unit=unit, user_id=user.id)
 
@@ -200,70 +186,85 @@ def add_new_event_type():
 
     elif event_type == "symptom":
         new_event_type = Symptom(label=label, scale=unit, user_id=user.id)
-    
+
     db.session.add(new_event_type)
     db.session.commit()
 
     if event_type == "habit":
-        new_obj = Habit.query.filter(Habit.label == label,
-                                     Habit.user == user).one()
+        new_obj = Habit.query.filter(Habit.label == label, Habit.user == user).one()
         new_id = new_obj.id
 
     elif event_type == "influence":
-        new_obj = Influence.query.filter(Influence.label == label,
-                                         Influence.user == user).one()
+        new_obj = Influence.query.filter(
+            Influence.label == label, Influence.user == user
+        ).one()
         new_id = new_obj.id
 
     elif event_type == "symptom":
-        new_obj = Symptom.query.filter(Symptom.label == label,
-                                     Symptom.user == user).one()
+        new_obj = Symptom.query.filter(
+            Symptom.label == label, Symptom.user == user
+        ).one()
         new_id = new_obj.id
 
-    return json.dumps({"new_id": new_id,
-                       "success": f"New {event_type} added successfully!"})
-        
+    return json.dumps(
+        {"new_id": new_id, "success": f"New {event_type} added successfully!"}
+    )
+
 
 ### Routes to track events
 @app.route("/track")
 def show_track_page():
-    """Show the page where you can track a Habit, Influence, or Symptom."""
-
     user = get_user()
 
     if user:
-        return render_template("track.html", habits=user.habits,
-                               influences=user.influences,
-                               symptoms=user.symptoms)
+        return render_template(
+            "track.html",
+            habits=user.habits,
+            influences=user.influences,
+            symptoms=user.symptoms,
+        )
     else:
-        return redirect(url_for('show_login_form'))
+        return redirect(url_for("show_login_form"))
 
 
-def create_event(evt_type, user_id, type_id, num,
-                 timestamp=datetime.now(), lat=None, lon=None):
-    """Instantiate a new event."""
-
+def create_event(
+    evt_type, user_id, type_id, num, timestamp=datetime.now(), lat=None, lon=None
+):
     user_id = session["user_id"]
 
     if evt_type == "habit":
-        new_event = HabitEvent(user_id=user_id, habit_id=type_id, 
-                                 num_units=num, timestamp=timestamp,
-                                 latitude=lat, longitude=lon)
+        new_event = HabitEvent(
+            user_id=user_id,
+            habit_id=type_id,
+            num_units=num,
+            timestamp=timestamp,
+            latitude=lat,
+            longitude=lon,
+        )
     elif evt_type == "influence":
-        new_event = InfluenceEvent(user_id=user_id, influence_id=type_id, 
-                                   intensity=num, timestamp=timestamp,
-                                   latitude=lat, longitude=lon)
+        new_event = InfluenceEvent(
+            user_id=user_id,
+            influence_id=type_id,
+            intensity=num,
+            timestamp=timestamp,
+            latitude=lat,
+            longitude=lon,
+        )
     elif evt_type == "symptom":
-        new_event = SymptomEvent(user_id=user_id, symptom_id=type_id,
-                                 intensity=num, timestamp=timestamp,
-                                 latitude=lat, longitude=lon)
+        new_event = SymptomEvent(
+            user_id=user_id,
+            symptom_id=type_id,
+            intensity=num,
+            timestamp=timestamp,
+            latitude=lat,
+            longitude=lon,
+        )
     db.session.add(new_event)
     db.session.commit()
 
 
 @app.route("/track", methods=["POST"])
 def track_something():
-    """Get inputs from tracking page and instantiate a new event."""
-
     user_id = session["user_id"]
     num = request.form.get("num")
     evt_type = request.form.get("eventType")
@@ -298,26 +299,26 @@ def track_current_weather(lat, lon):
 
     # Get current weather from Open Weather API for given lat & lon
     weather_token = os.environ.get("WEATHER_TOKEN")
-    response_obj = requests.get(f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&APPID={weather_token}")
+    response_obj = requests.get(
+        f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&APPID={weather_token}"
+    )
     weather_info = response_obj.json()
-    weather_id = weather_info['weather'][0]['id']
+    weather_id = weather_info["weather"][0]["id"]
 
-    temp_info = weather_info['main']
-    current_temp_f = 9 / 5 * (temp_info['temp'] - 273) + 32
- 
+    temp_info = weather_info["main"]
+    current_temp_f = 9 / 5 * (temp_info["temp"] - 273) + 32
+
     temp_infl = ensure_tracking_infl("temperature", 125)
     weather_infl = ensure_tracking_infl("weather", 1000)
 
     # Add temp & weather events to db
-    create_event("influence", user_id, temp_infl.id, current_temp_f,
-                 timestamp, lat, lon)
-    create_event("influence", user_id, weather_infl.id, weather_id, timestamp,
-                 lat, lon)
+    create_event(
+        "influence", user_id, temp_infl.id, current_temp_f, timestamp, lat, lon
+    )
+    create_event("influence", user_id, weather_infl.id, weather_id, timestamp, lat, lon)
 
 
 def ensure_tracking_infl(label, scale):
-    """If user doesn't track influence yet, add it."""
-
     infl = Influence.query.filter_by(label=label).first()
 
     if infl:
@@ -331,9 +332,7 @@ def ensure_tracking_infl(label, scale):
 
 
 def enable_gcal():
-    """Have user authenticate GCal, or verify they already have."""
-    
-    SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+    SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 
     user = get_user()
     creds = user.gcal_token
@@ -345,21 +344,18 @@ def enable_gcal():
             creds.refresh(Request())
         else:
             # prompt login
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
             creds = flow.run_local_server(port=0)
 
         # Save the credentials to db
         user.gcal_token = creds
         db.session.commit()
 
-    return build('calendar', 'v3', credentials=creds)
+    return build("calendar", "v3", credentials=creds)
 
 
 @app.route("/track-gcal-habits", methods=["POST"])
 def get_gcal_events():
-    """Track all past week's events with one of User's Habit labels in title."""
-
     user = get_user()
     dt_start = request.form.get("startDate")
     dt_end = request.form.get("endDate")
@@ -367,49 +363,55 @@ def get_gcal_events():
     gcal_info = enable_gcal()
 
     if not dt_start:
-        dt_start = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
+        dt_start = (datetime.utcnow() - timedelta(days=7)).isoformat() + "Z"
     else:
-        dt_start = dateutil.parser.parse(dt_start).isoformat() + 'Z'
+        dt_start = dateutil.parser.parse(dt_start).isoformat() + "Z"
     if not dt_end:
-        dt_end = datetime.utcnow().isoformat() + 'Z'
+        dt_end = datetime.utcnow().isoformat() + "Z"
     else:
-        dt_end = dateutil.parser.parse(dt_end).isoformat() + 'Z'
+        dt_end = dateutil.parser.parse(dt_end).isoformat() + "Z"
 
-    calendars = gcal_info.calendarList().list().execute()['items']
+    calendars = gcal_info.calendarList().list().execute()["items"]
     events = []
-    
+
     for calendar in calendars:
-        events_result = gcal_info.events().list(
-            calendarId=calendar['id'],
-            timeMin=dt_start, timeMax=dt_end,
-            singleEvents=True,
-            orderBy='startTime'
-        ).execute()
+        events_result = (
+            gcal_info.events()
+            .list(
+                calendarId=calendar["id"],
+                timeMin=dt_start,
+                timeMax=dt_end,
+                singleEvents=True,
+                orderBy="startTime",
+            )
+            .execute()
+        )
         events += events_result["items"]
-        
 
     # If any GCal events in time range have habit labels in title, track them.
     events_tracked = ""
     for event in events:
         # Get info from event
-        start = event['start'].get('dateTime', event['start'].get('date'))
+        start = event["start"].get("dateTime", event["start"].get("date"))
         start_format = start[:10]
         if len(start) > 11:
-            reformat_time = datetime.strptime(start[11:16], "%H:%M") \
-                            .strftime("%I:%M %p")
+            reformat_time = datetime.strptime(start[11:16], "%H:%M").strftime(
+                "%I:%M %p"
+            )
             start_format += " " + reformat_time
-        end = event['end'].get('dateTime', event['end'].get('date'))
-        title = event['summary']
+        end = event["end"].get("dateTime", event["end"].get("date"))
+        title = event["summary"]
         title_words = set(title.lower().split())
 
         for habit in habits:
             if habit.label.lower() in title_words:
 
                 # Check if event is already tracked
-                duplicate = HabitEvent.query\
-                                .filter(HabitEvent.user_id == user.id,
-                                        HabitEvent.timestamp == start,
-                                        HabitEvent.habit_id == habit.id).first()
+                duplicate = HabitEvent.query.filter(
+                    HabitEvent.user_id == user.id,
+                    HabitEvent.timestamp == start,
+                    HabitEvent.habit_id == habit.id,
+                ).first()
 
                 if not duplicate:
                     create_event("habit", user.id, habit.id, 1, start)
@@ -420,77 +422,83 @@ def get_gcal_events():
 
     return events_tracked
 
+
 ### View your data + charts
 @app.route("/charts")
 def show_charts_page():
-    """Show page with User's charts."""
-
     return render_template("charts.html")
 
 
 def get_events_in_range(start, end):
-    """Get all events that occurred during given date range for user."""
-
     user = get_user()
 
-    habit_events = HabitEvent.query.filter(HabitEvent.timestamp
-                        .between(start, end), HabitEvent.user == user).all()
+    habit_events = HabitEvent.query.filter(
+        HabitEvent.timestamp.between(start, end), HabitEvent.user == user
+    ).all()
 
     influence_events = InfluenceEvent.query.filter(
-                            InfluenceEvent.timestamp.between(start, end),
-                            InfluenceEvent.user == user).all()
+        InfluenceEvent.timestamp.between(start, end), InfluenceEvent.user == user
+    ).all()
 
     symptom_events = SymptomEvent.query.filter(
-                            SymptomEvent.timestamp.between(start, end),
-                            SymptomEvent.user == user).all()
+        SymptomEvent.timestamp.between(start, end), SymptomEvent.user == user
+    ).all()
 
-    return {"habit_events": habit_events, "influence_events": influence_events, 
-            "symptom_events": symptom_events}
+    return {
+        "habit_events": habit_events,
+        "influence_events": influence_events,
+        "symptom_events": symptom_events,
+    }
+
 
 def get_evt_type_min_max(evt_type, label):
-    """Get the min and max units for a user's events."""
-
     user = get_user()
 
     if evt_type == "habit":
-        type_option = Habit.query.filter(Habit.user == user,
-                                                    Habit.label == label).one()
+        type_option = Habit.query.filter(Habit.user == user, Habit.label == label).one()
         units = [evt.num_units for evt in type_option.habit_events]
 
     elif evt_type == "influence":
-        type_option = Influence.query.filter(Influence.user == user,
-                                                Influence.label == label).one()
+        type_option = Influence.query.filter(
+            Influence.user == user, Influence.label == label
+        ).one()
         units = [evt.intensity for evt in type_option.influence_events]
 
     elif evt_type == "symptom":
-        type_option = Symptom.query.filter(Symptom.user == user,
-                                                Symptom.label == label).one()
+        type_option = Symptom.query.filter(
+            Symptom.user == user, Symptom.label == label
+        ).one()
         units = [evt.intensity for evt in type_option.symptom_events]
 
     return {"min": min(units), "max": max(units)}
 
 
 def get_event_infos(start, end):
-    """Reformat events info to be used later for line chart."""
-
     events_dict = get_events_in_range(start, end)
     habit_events = events_dict["habit_events"]
     influence_events = events_dict["influence_events"]
     symptom_events = events_dict["symptom_events"]
 
+    habit_event_info = [
+        (habit_event.habit, habit_event, habit_event.num_units, "habit")
+        for habit_event in habit_events
+    ]
 
-    habit_event_info = [(habit_event.habit, habit_event, habit_event.num_units,
-                         "habit")
-                         for habit_event in habit_events]
+    influence_event_info = [
+        (
+            influence_event.influence,
+            influence_event,
+            influence_event.intensity,
+            "influence",
+        )
+        for influence_event in influence_events
+        if influence_event.influence.label != "weather"
+    ]
 
-    influence_event_info = [(influence_event.influence, influence_event,
-                             influence_event.intensity, "influence")
-                            for influence_event in influence_events
-                            if influence_event.influence.label != "weather"]
-
-    symptom_event_info = [(symptom_event.symptom, symptom_event,
-                           symptom_event.intensity, "symptom")
-                          for symptom_event in symptom_events]
+    symptom_event_info = [
+        (symptom_event.symptom, symptom_event, symptom_event.intensity, "symptom")
+        for symptom_event in symptom_events
+    ]
 
     event_infos = habit_event_info + influence_event_info + symptom_event_info
 
@@ -511,7 +519,7 @@ def get_line_chart_data():
     else:
         start = datetime.now().date() - timedelta(days=7)
         end = datetime.now().date()
-    
+
     num_days = (end - start).days + 1
 
     date_range = [(start + timedelta(days=i)) for i in range(num_days)]
@@ -521,15 +529,15 @@ def get_line_chart_data():
     labels_types = list({(info[0].label, info[3]) for info in event_infos})
 
     graph_colors = [
-        '#689689', # light blue
-        '#DC9E82', # orange
-        '#D87B7D', # pink
-        '#537bc4', # periwinkle
-        '#acc236', # light green
-        '#166a8f', # grey blue
-        '#00a950', # kelly green
-        '#58595b', # grey
-        '#8549ba' # purple
+        "#689689",  # light blue
+        "#DC9E82",  # orange
+        "#D87B7D",  # pink
+        "#537bc4",  # periwinkle
+        "#acc236",  # light green
+        "#166a8f",  # grey blue
+        "#00a950",  # kelly green
+        "#58595b",  # grey
+        "#8549ba",  # purple
     ]
 
     datasets = []
@@ -537,17 +545,19 @@ def get_line_chart_data():
     for i, label_type in enumerate(labels_types):
         # get min & max units for that label
         min_max = get_evt_type_min_max(label_type[1], label_type[0])
-        label_min = min_max['min']
-        label_max = min_max['max']
-        
+        label_min = min_max["min"]
+        label_max = min_max["max"]
+
         # take max units for event label on given day, find % of label's range
         # later: ideally, make min max function find min and max based on day,
         #    not based on event occurrence
         day_percents = []
         for day in date_range:
-            day_units = [info[2] for info in event_infos
-                         if info[1].timestamp.date() == day
-                         and info[0].label == label_type[0]]
+            day_units = [
+                info[2]
+                for info in event_infos
+                if info[1].timestamp.date() == day and info[0].label == label_type[0]
+            ]
             if label_max == label_min and day_units:
                 unit_percent = 1
             elif label_max != label_min and day_units:
@@ -556,13 +566,15 @@ def get_line_chart_data():
                 unit_percent = 0
             day_percents.append(unit_percent)
 
-        datasets.append({
-            "label": label_type[0],
-            "data": day_percents,
-            "borderColor": graph_colors[i % len(graph_colors)],
-            "borderWidth": 3,
-            "fill": False
-        })
+        datasets.append(
+            {
+                "label": label_type[0],
+                "data": day_percents,
+                "borderColor": graph_colors[i % len(graph_colors)],
+                "borderWidth": 3,
+                "fill": False,
+            }
+        )
 
     return json.dumps({"labels": str_date_range, "datasets": datasets})
 
@@ -592,12 +604,21 @@ def get_associated_events(evt_dates):
     symp_evts = SymptomEvent.query.filter(SymptomEvent.user == user).all()
 
     # Get all event labels associated with those dates
-    assoc_habits = [habit_evt.habit.label for habit_evt in habit_evts
-                    if habit_evt.timestamp.date() in assoc_dates]
-    assoc_infls = [infl_evt.influence.label for infl_evt in infl_evts
-                    if infl_evt.timestamp.date() in assoc_dates]
-    assoc_symps = [symp_evt.symptom.label for symp_evt in symp_evts
-                    if symp_evt.timestamp.date() in assoc_dates]
+    assoc_habits = [
+        habit_evt.habit.label
+        for habit_evt in habit_evts
+        if habit_evt.timestamp.date() in assoc_dates
+    ]
+    assoc_infls = [
+        infl_evt.influence.label
+        for infl_evt in infl_evts
+        if infl_evt.timestamp.date() in assoc_dates
+    ]
+    assoc_symps = [
+        symp_evt.symptom.label
+        for symp_evt in symp_evts
+        if symp_evt.timestamp.date() in assoc_dates
+    ]
 
     # Return list of unique labels associated with given event type
     return list(set(assoc_habits + assoc_infls + assoc_symps))
@@ -620,9 +641,17 @@ def get_bubble_chart_data():
 
         associations = get_associated_events(evt_dates)
 
-        event_types.append({"type": "habit", "id": habit.id, "label": habit.label,
-                        "units": units, "fill": "#D87B7D", "group": 0,
-                        "associations": associations})
+        event_types.append(
+            {
+                "type": "habit",
+                "id": habit.id,
+                "label": habit.label,
+                "units": units,
+                "fill": "#D87B7D",
+                "group": 0,
+                "associations": associations,
+            }
+        )
 
     for influence in user.influences:
         if influence.label != "weather" and influence.label != "temperature":
@@ -634,10 +663,17 @@ def get_bubble_chart_data():
 
             associations = get_associated_events(evt_dates)
 
-            event_types.append({"type": "influence", "id": influence.id,
-                            "label": influence.label, "units": units,
-                            "fill": "#DC9E82", "group": 1,
-                            "associations": associations})
+            event_types.append(
+                {
+                    "type": "influence",
+                    "id": influence.id,
+                    "label": influence.label,
+                    "units": units,
+                    "fill": "#DC9E82",
+                    "group": 1,
+                    "associations": associations,
+                }
+            )
 
     for symptom in user.symptoms:
         units = 0
@@ -648,10 +684,17 @@ def get_bubble_chart_data():
 
         associations = get_associated_events(evt_dates)
 
-        event_types.append({"type": "symptom", "id": symptom.id,
-                        "label": symptom.label, "units": units,
-                        "fill": "#B2E6D4", "group": 2,
-                        "associations": associations})
+        event_types.append(
+            {
+                "type": "symptom",
+                "id": symptom.id,
+                "label": symptom.label,
+                "units": units,
+                "fill": "#B2E6D4",
+                "group": 2,
+                "associations": associations,
+            }
+        )
 
     return json.dumps(event_types)
 
@@ -679,7 +722,7 @@ def get_yoga_classes():
     start_input = request.args.get("start")
     end_input = request.args.get("end")
     local_tz = get_localzone()
-    pst = pytz.timezone('US/Pacific')
+    pst = pytz.timezone("US/Pacific")
     local_tz = get_localzone()
 
     user_location = request.args.get("location")
@@ -688,7 +731,9 @@ def get_yoga_classes():
 
     # If no time entered, start = now and end = 6 hours from now
     if date_input and start_input and end_input:
-        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(pst)
+        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(
+            pst
+        )
         end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").astimezone(pst)
     else:
         start = datetime.now().astimezone(pst)
@@ -696,17 +741,25 @@ def get_yoga_classes():
 
     ### Get info for Mindbody classes
     # Prep info for mindbody get requests
-    mindbody = "https://prod-mkt-gateway.mindbody.io/v1/search/class_times?sort"\
-                "=start_time&page.size=100&page.number=1&filter.category_types=Fitness"\
-                f"&filter.inventory_source=MB&filter.start_time_from={start.astimezone(pytz.utc).isoformat() + 'Z'}"\
-                f"&filter.start_time_to={end.astimezone(pytz.utc).isoformat() + 'Z'}&filter.dynamic_priceable=any"\
-                "&filter.include_dynamic_pricing=true&filter.location_slug="
+    mindbody = (
+        "https://prod-mkt-gateway.mindbody.io/v1/search/class_times?sort"
+        "=start_time&page.size=100&page.number=1&filter.category_types=Fitness"
+        f"&filter.inventory_source=MB&filter.start_time_from={start.astimezone(pytz.utc).isoformat() + 'Z'}"
+        f"&filter.start_time_to={end.astimezone(pytz.utc).isoformat() + 'Z'}&filter.dynamic_priceable=any"
+        "&filter.include_dynamic_pricing=true&filter.location_slug="
+    )
 
-    mb_locations = ["love-story-yoga-mission-dolores", "yoga-tree-6", 
-                    "yoga-tree-5", "yoga-tree-3", "yoga-tree-2",
-                    "astayoga-mission-dolores", "mission-yoga-mission-district",
-                    "moxie-yoga-fitness-mission-district",
-                    "moxie-yoga-fitness-bernal-heights"]
+    mb_locations = [
+        "love-story-yoga-mission-dolores",
+        "yoga-tree-6",
+        "yoga-tree-5",
+        "yoga-tree-3",
+        "yoga-tree-2",
+        "astayoga-mission-dolores",
+        "mission-yoga-mission-district",
+        "moxie-yoga-fitness-mission-district",
+        "moxie-yoga-fitness-bernal-heights",
+    ]
 
     # Get class data from all mindbody locations
     mb_classes = []
@@ -718,12 +771,18 @@ def get_yoga_classes():
     # Extract individual class info from mindbody JSON response
     for clas in mb_classes:
         info = clas["attributes"]
-        clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
-                        .astimezone(pytz.utc).astimezone(pst)
+        clas_end = (
+            dateutil.parser.parse(info["class_time_end_time"])
+            .astimezone(pytz.utc)
+            .astimezone(pst)
+        )
         duration = info["class_time_duration"]
-        clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
-                         .astimezone(pytz.utc).astimezone(pst)
-        title = info['course_name']
+        clas_start = (
+            dateutil.parser.parse(info["class_time_start_time"])
+            .astimezone(pytz.utc)
+            .astimezone(pst)
+        )
+        title = info["course_name"]
 
         # Eliminate classes outside of availability + classes w/ bad keywords
         bad_kws = ["kundalini", "yin", "light", "therapeutic", "recover", "buti"]
@@ -731,29 +790,31 @@ def get_yoga_classes():
             address = info["location_address"] + ", SF"
             # If user gave location, get travel time to studio
             if user_location:
-                gm_url_2 = f"?origin={user_location}&destination={address}" \
-                           f"&key={gmaps_token}&mode="
+                gm_url_2 = (
+                    f"?origin={user_location}&destination={address}"
+                    f"&key={gmaps_token}&mode="
+                )
 
-                transit_time = requests.get(gm_url_1 + gm_url_2 + "transit") \
-                               .json()["routes"][0]["legs"][0]["duration"] \
-                               ["text"]
-                biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling") \
-                               .json()["routes"][0]["legs"][0]["duration"] \
-                               ["text"]
+                transit_time = requests.get(gm_url_1 + gm_url_2 + "transit").json()[
+                    "routes"
+                ][0]["legs"][0]["duration"]["text"]
+                biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling").json()[
+                    "routes"
+                ][0]["legs"][0]["duration"]["text"]
                 travel_time = min(transit_time, biking_time)
             else:
                 transit_time = ""
                 biking_time = ""
                 travel_time = "0 mins"
-            
+
             # Eliminate classes user can't travel to in time
             if "hour" not in travel_time:
                 travel_dt = timedelta(minutes=int(travel_time[:-5]))
                 if (start + travel_dt) <= clas_start:
 
                     # For all classes that meet requirements, get remaining info
-                    studio = info['location_name']
-                    brand = info['location_business_name']
+                    studio = info["location_name"]
+                    brand = info["location_business_name"]
                     if "MOXIE" in studio:
                         studio = f"{studio[:5]} {info['location_neighborhood']}"
                     if "Yoga Tree" in brand:
@@ -761,14 +822,21 @@ def get_yoga_classes():
 
                     instructor = info["instructor_name"]
 
-
                     # Add info from each class in time range to data_list
-                    data_list.append({"studio": studio, "title": title,
-                        "instructor": instructor, "duration": duration,
-                        "start": clas_start.strftime("%-I:%M%p"),
-                        "end": clas_end.strftime("%-I:%M%p"),
-                        "address": address, "travel": travel_time,
-                        "transit": transit_time, "biking": biking_time})
+                    data_list.append(
+                        {
+                            "studio": studio,
+                            "title": title,
+                            "instructor": instructor,
+                            "duration": duration,
+                            "start": clas_start.strftime("%-I:%M%p"),
+                            "end": clas_end.strftime("%-I:%M%p"),
+                            "address": address,
+                            "travel": travel_time,
+                            "transit": transit_time,
+                            "biking": biking_time,
+                        }
+                    )
 
     ### Get info for CorePower classes
     # Prep info needed for corepower get requests
@@ -779,7 +847,7 @@ def get_yoga_classes():
         "Hayes Valley": "150 Van Ness Ave Suite A",
         "Fremont": "215 Fremont Street",
         "FIDI": "241 California Street",
-        "Duboce": "100 Church Street, SF"
+        "Duboce": "100 Church Street, SF",
     }
 
     # Get class data from each corepower location
@@ -794,8 +862,12 @@ def get_yoga_classes():
         title = clas["name"]
 
         # Eliminate those out of input time range + sculpt/c1 classes
-        if clas_start >= start and clas_end <= end \
-            and not "Sculpt" in title and not "C1" in title:
+        if (
+            clas_start >= start
+            and clas_end <= end
+            and not "Sculpt" in title
+            and not "C1" in title
+        ):
 
             # If user gave location, get travel time to studio
             studio = clas["location"]["name"][6:]
@@ -804,12 +876,12 @@ def get_yoga_classes():
             # If user gave location, get travel time to studio
             if user_location:
                 gm_url_2 = f"?origin={user_location}&destination={address}&key={gmaps_token}&mode="
-                transit_time = requests.get(gm_url_1 + gm_url_2 + "transit") \
-                               .json()["routes"][0]["legs"][0]["duration"] \
-                               ["text"]
-                biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling") \
-                               .json()["routes"][0]["legs"][0]["duration"] \
-                               ["text"]
+                transit_time = requests.get(gm_url_1 + gm_url_2 + "transit").json()[
+                    "routes"
+                ][0]["legs"][0]["duration"]["text"]
+                biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling").json()[
+                    "routes"
+                ][0]["legs"][0]["duration"]["text"]
                 travel_time = min(transit_time, biking_time)
             else:
                 transit_time = ""
@@ -827,12 +899,20 @@ def get_yoga_classes():
                 duration = (clas_end - clas_start).total_seconds() / 60
 
                 # add info from each class in time range to data_list
-                data_list.append({"studio": "CorePower " + studio,
-                                 "title": title, "instructor": instructor,
-                                 "start": start_format, "end": end_format,
-                                 "duration": duration, "address": address,
-                                 "travel": travel_time, "transit": transit_time,
-                                 "biking": biking_time})
+                data_list.append(
+                    {
+                        "studio": "CorePower " + studio,
+                        "title": title,
+                        "instructor": instructor,
+                        "start": start_format,
+                        "end": end_format,
+                        "duration": duration,
+                        "address": address,
+                        "travel": travel_time,
+                        "transit": transit_time,
+                        "biking": biking_time,
+                    }
+                )
 
     ### Get info for Ritual classes
     ritual_classes = get_ritual_classes(start, end)
@@ -840,12 +920,16 @@ def get_yoga_classes():
     for ritual_class in ritual_classes:
 
         if user_location:
-            gm_url_2 = f"?origin={user_location}&destination={address}" \
-                       f"&key={gmaps_token}&mode="
-            transit_time = requests.get(gm_url_1 + gm_url_2 + "transit").json() \
-                            ["routes"][0]["legs"][0]["duration"]["text"]
-            biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling").json() \
-                            ["routes"][0]["legs"][0]["duration"]["text"]
+            gm_url_2 = (
+                f"?origin={user_location}&destination={address}"
+                f"&key={gmaps_token}&mode="
+            )
+            transit_time = requests.get(gm_url_1 + gm_url_2 + "transit").json()[
+                "routes"
+            ][0]["legs"][0]["duration"]["text"]
+            biking_time = requests.get(gm_url_1 + gm_url_2 + "bicycling").json()[
+                "routes"
+            ][0]["legs"][0]["duration"]["text"]
             travel_time = min(transit_time, biking_time)
         else:
             transit_time = ""
@@ -863,8 +947,8 @@ def get_yoga_classes():
             ritual_class["start"] = ritual_class["start"].strftime("%-I:%M%p")
             ritual_class["end"] = ritual_class["end"].strftime("%-I:%M%p")
             data_list.append(ritual_class)
-    
-    return json.dumps(data_list) 
+
+    return json.dumps(data_list)
 
 
 @app.route("/la-yoga-classes")
@@ -874,12 +958,14 @@ def get_la_yoga_classes():
     date_input = request.args.get("dateInput")
     start_input = request.args.get("start")
     end_input = request.args.get("end")
-    pst = pytz.timezone('US/Pacific')
+    pst = pytz.timezone("US/Pacific")
     local_tz = get_localzone()
 
     # If no time entered, start = now and end = 6 hours from now
     if date_input and start_input and end_input:
-        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(pst)
+        start = datetime.strptime(date_input + start_input, "%Y-%m-%d%H:%M").astimezone(
+            pst
+        )
         end = datetime.strptime(date_input + end_input, "%Y-%m-%d%H:%M").astimezone(pst)
     else:
         start = datetime.now().astimezone(pst)
@@ -887,11 +973,13 @@ def get_la_yoga_classes():
 
     ### Get info for Mindbody classes
     # Prep info for mindbody get requests
-    mindbody = "https://prod-mkt-gateway.mindbody.io/v1/search/class_times?sort"\
-                "=start_time&page.size=100&page.number=1&filter.category_types=Fitness"\
-                f"&filter.inventory_source=MB&filter.start_time_from={start.astimezone(pytz.utc).isoformat() + 'Z'}"\
-                f"&filter.start_time_to={end.astimezone(pytz.utc).isoformat() + 'Z'}&filter.dynamic_priceable=any"\
-                "&filter.include_dynamic_pricing=true&filter.location_slug="
+    mindbody = (
+        "https://prod-mkt-gateway.mindbody.io/v1/search/class_times?sort"
+        "=start_time&page.size=100&page.number=1&filter.category_types=Fitness"
+        f"&filter.inventory_source=MB&filter.start_time_from={start.astimezone(pytz.utc).isoformat() + 'Z'}"
+        f"&filter.start_time_to={end.astimezone(pytz.utc).isoformat() + 'Z'}&filter.dynamic_priceable=any"
+        "&filter.include_dynamic_pricing=true&filter.location_slug="
+    )
 
     mb_locations = ["yoga-jaya", "yoga-blend", "yoga-noho-noho", "the-wellness-of-oz"]
 
@@ -905,26 +993,37 @@ def get_la_yoga_classes():
     # Extract individual class info from mindbody JSON response
     for clas in mb_classes:
         info = clas["attributes"]
-        clas_end = dateutil.parser.parse(info["class_time_end_time"]) \
-                   .astimezone(pytz.utc).astimezone(pst)
+        clas_end = (
+            dateutil.parser.parse(info["class_time_end_time"])
+            .astimezone(pytz.utc)
+            .astimezone(pst)
+        )
         duration = info["class_time_duration"]
-        clas_start = dateutil.parser.parse(info["class_time_start_time"]) \
-                     .astimezone(pytz.utc).astimezone(pst)
-        title = info['course_name']
+        clas_start = (
+            dateutil.parser.parse(info["class_time_start_time"])
+            .astimezone(pytz.utc)
+            .astimezone(pst)
+        )
+        title = info["course_name"]
 
         # Eliminate classes outside of availability + classes w/ bad keywords
         # bad_kws = ["kundalini", "yin", "light", "therapeutic", "recover", "buti"]
         # if not any(kw in title.lower() for kw in bad_kws) and
         if clas_end <= end and start <= clas_start:
-            studio = info['location_name']
+            studio = info["location_name"]
             instructor = info["instructor_name"]
 
-
             # Add info from each class in time range to data_list
-            data_list.append({"studio": studio, "title": title,
-                "instructor": instructor, "duration": duration,
-                "start": clas_start.strftime("%-I:%M%p"),
-                "end": clas_end.strftime("%-I:%M%p")})
+            data_list.append(
+                {
+                    "studio": studio,
+                    "title": title,
+                    "instructor": instructor,
+                    "duration": duration,
+                    "start": clas_start.strftime("%-I:%M%p"),
+                    "end": clas_end.strftime("%-I:%M%p"),
+                }
+            )
 
     ### Get info for CorePower classes
     # Prep info needed for corepower get requests
@@ -954,12 +1053,18 @@ def get_la_yoga_classes():
             duration = (clas_end - clas_start).total_seconds() / 60
 
             # add info from each class in time range to data_list
-            data_list.append({"studio": "CorePower " + studio,
-                             "title": title, "instructor": instructor,
-                             "start": start_format, "end": end_format,
-                             "duration": duration})
-    
-    return json.dumps(data_list) 
+            data_list.append(
+                {
+                    "studio": "CorePower " + studio,
+                    "title": title,
+                    "instructor": instructor,
+                    "start": start_format,
+                    "end": end_format,
+                    "duration": duration,
+                }
+            )
+
+    return json.dumps(data_list)
 
 
 if __name__ == "__main__":
@@ -967,4 +1072,4 @@ if __name__ == "__main__":
     connect_to_db(app)
     # DebugToolbarExtension(app)
 
-    app.run(port=5000, host='0.0.0.0')
+    app.run(port=5000, host="0.0.0.0")

@@ -5,7 +5,6 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 
-
 class User(db.Model):
     """A person using the habit tracker."""
 
@@ -45,11 +44,15 @@ class Habit(db.Model):
     def to_json(self):
         """Get Habit details in JSON format."""
 
-        return {"id": self.id, "label": self.label, "unit": self.unit,
-                "user_id": self.user_id}
+        return {
+            "id": self.id,
+            "label": self.label,
+            "unit": self.unit,
+            "user_id": self.user_id,
+        }
 
 
-class HabitEvent(db.Model): # rename: habit occurrence
+class HabitEvent(db.Model):  # rename: habit occurrence
     """An instance of a Habit completed by a User."""
 
     __tablename__ = "habit_events"
@@ -57,9 +60,9 @@ class HabitEvent(db.Model): # rename: habit occurrence
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     habit_id = db.Column(db.Integer, db.ForeignKey("habits.id"))
-    num_units = db.Column(db.Float) # if units null in habit, can be null here
+    num_units = db.Column(db.Float)  # if units null in habit, can be null here
     timestamp = db.Column(db.DateTime, nullable=False)
-    latitude = db.Column(db.Float)    # ok for location columns to be null?
+    latitude = db.Column(db.Float)  # ok for location columns to be null?
     longitude = db.Column(db.Float)
 
     user = db.relationship("User", uselist=False, backref="habit_events")
@@ -72,14 +75,14 @@ class HabitEvent(db.Model): # rename: habit occurrence
 
 
 class Influence(db.Model):
-    """Something that may passively experienced by a User, like the weather.""" 
+    """Something that may passively experienced by a User, like the weather."""
 
     __tablename__ = "influences"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     label = db.Column(db.String(30), unique=True, nullable=False)
-    scale = db.Column(db.String(20))     # nullable
+    scale = db.Column(db.String(20))  # nullable
 
     def __str__(self):
         """Show Influence id, label, and associated User's username."""
@@ -89,8 +92,12 @@ class Influence(db.Model):
     def to_json(self):
         """Get Influence details in JSON format."""
 
-        return {"id": self.id, "label": self.label, "scale": self.scale,
-                "user_id": self.user_id}
+        return {
+            "id": self.id,
+            "label": self.label,
+            "scale": self.scale,
+            "user_id": self.user_id,
+        }
 
 
 class InfluenceEvent(db.Model):
@@ -107,14 +114,15 @@ class InfluenceEvent(db.Model):
     longitude = db.Column(db.Float)
 
     user = db.relationship("User", uselist=False, backref="influence_events")
-    influence = db.relationship("Influence", uselist=False, 
-                                backref="influence_events")
+    influence = db.relationship("Influence", uselist=False, backref="influence_events")
 
     def __str__(self):
         """Show Influence id, label, and associated User's username."""
 
-        return f"<InfluenceEvent {self.id} {self.influence.label} "\
-               f"{self.user.username}>"    
+        return (
+            f"<InfluenceEvent {self.id} {self.influence.label} "
+            f"{self.user.username}>"
+        )
 
 
 class Symptom(db.Model):
@@ -125,7 +133,7 @@ class Symptom(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     label = db.Column(db.String(50), unique=True, nullable=False)
-    scale = db.Column(db.String(20))     # nullable
+    scale = db.Column(db.String(20))  # nullable
 
     def __str__(self):
         """Show Symptom id, label, and associated User's username."""
@@ -135,8 +143,12 @@ class Symptom(db.Model):
     def to_json(self):
         """Get Symptom details in JSON format."""
 
-        return {"id": self.id, "label": self.label, "scale": self.scale,
-                "user_id": self.user_id}
+        return {
+            "id": self.id,
+            "label": self.label,
+            "scale": self.scale,
+            "user_id": self.user_id,
+        }
 
 
 class SymptomEvent(db.Model):
@@ -153,14 +165,12 @@ class SymptomEvent(db.Model):
     longitude = db.Column(db.Float)
 
     user = db.relationship("User", uselist=False, backref="symptom_events")
-    symptom = db.relationship("Symptom", uselist=False,
-                              backref="symptom_events")
+    symptom = db.relationship("Symptom", uselist=False, backref="symptom_events")
 
     def __str__(self):
         """Show Symptom id, label, and associated User's username."""
 
-        return f"<SymptomEvent {self.id} {self.symptom.label} "\
-               f"{self.user.username}>"
+        return f"<SymptomEvent {self.id} {self.symptom.label} " f"{self.user.username}>"
 
 
 class Goal(db.Model):

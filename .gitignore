@@ -7,3 +7,4 @@ token.pickle
 secrets.sh
 habit-tracker.sql
 flask.log
+.vscode
