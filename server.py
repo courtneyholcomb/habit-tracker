@@ -1,5 +1,3 @@
-"""Routes for habit tracker."""
-
 import requests
 import json
 import os
@@ -292,8 +290,6 @@ def track_something():
 
 
 def track_current_weather(lat, lon):
-    """Track user's current weather & temp info."""
-
     user_id = session["user_id"]
     timestamp = datetime.now()
 
@@ -507,8 +503,6 @@ def get_event_infos(start, end):
 
 @app.route("/line-chart-data", methods=["POST"])
 def get_line_chart_data():
-    """Get data needed for line chart."""
-
     start_input = request.form.get("startDate")
     end_input = request.form.get("endDate")
 
@@ -580,11 +574,8 @@ def get_line_chart_data():
 
 
 def get_associated_events(evt_dates):
-    """Get all even types associated with the given event type.
-
-    Given a list of dates associated with an event type for the logged in User, 
-    get all event types that had events occur on the same, prior, or following 
-    day as given event type."""
+    """Given a list of dates when a given event type occurred for the logged in User, 
+    get all event types that occurred on the same, prior, or following day as given event type."""
 
     user = get_user()
 
@@ -626,8 +617,6 @@ def get_associated_events(evt_dates):
 
 @app.route("/bubble-chart-data")
 def get_bubble_chart_data():
-    """Get User's tracked data in JSON format for bubble chart."""
-
     user = get_user()
     event_types = []
 
@@ -702,22 +691,16 @@ def get_bubble_chart_data():
 ### YOGA CLASS PICKER!
 @app.route("/class-picker")
 def show_class_picker():
-    """Show class picker page."""
-
     return render_template("class-picker.html")
 
 
 @app.route("/la-class-picker")
 def show_la_class_picker():
-    """Show LA class picker page."""
-
     return render_template("la-class-picker.html")
 
 
 @app.route("/yoga-classes")
 def get_yoga_classes():
-    """Get JSON-formatted yoga classes for given day."""
-
     date_input = request.args.get("dateInput")
     start_input = request.args.get("start")
     end_input = request.args.get("end")
@@ -953,8 +936,6 @@ def get_yoga_classes():
 
 @app.route("/la-yoga-classes")
 def get_la_yoga_classes():
-    """Get JSON-formatted yoga classes for given day."""
-
     date_input = request.args.get("dateInput")
     start_input = request.args.get("start")
     end_input = request.args.get("end")
